@@ -1,4 +1,4 @@
-package com.example.assignment_fit5046
+package com.example.volunteerlink_fit5046.datamodels
 
 import org.junit.Test
 
