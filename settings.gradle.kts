@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Assignment-FIT5046"
+rootProject.name = "Volunteerlink-FIT5046"
 include(":app")
  
