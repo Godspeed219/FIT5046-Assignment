@@ -1,4 +1,4 @@
-package com.example.volunteerlink_fit5046.datamodels
+package com.example.assignment_fit5046.datamodels
 
 import com.google.gson.annotations.SerializedName
 
