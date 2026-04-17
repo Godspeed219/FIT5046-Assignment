@@ -9,13 +9,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.assignment_fit5046.components.ngo.NgoNavBar
 import com.example.assignment_fit5046.components.volunteer.VolunteerNavBar
 import com.example.assignment_fit5046.screens.common.LoginScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
+import com.example.assignment_fit5046.screens.volunteer.DriveDetailScreen
+import com.example.assignment_fit5046.screens.volunteer.HomeScreen
+import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
+import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
+import com.example.assignment_fit5046.screens.volunteer.SearchScreen
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -62,19 +69,23 @@ fun AppNavigation() {
                 )
             }
             composable(Screen.VolunteerHome.route) {
-                Text("VolunteerHome Screen")
+                HomeScreen(navController = navController)
             }
-            composable(Screen.DriveDetail.route) {
-                Text("DriveDetail Screen")
+            composable(
+                route = "${Screen.DriveDetail.route}/{driveId}",
+                arguments = listOf(navArgument("driveId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val driveId = backStackEntry.arguments?.getString("driveId") ?: ""
+                DriveDetailScreen(navController = navController, driveId = driveId)
             }
             composable(Screen.Search.route) {
-                Text("Search Screen")
+                SearchScreen(navController = navController)
             }
             composable(Screen.MyApplications.route) {
-                Text("MyApplications Screen")
+                MyApplicationsScreen(navController = navController)
             }
             composable(Screen.VolunteerProfile.route) {
-                Text("VolunteerProfile Screen")
+                ProfileScreen(navController = navController)
             }
             composable(Screen.NgoDashboard.route) {
                 Text("NgoDashboard Screen")

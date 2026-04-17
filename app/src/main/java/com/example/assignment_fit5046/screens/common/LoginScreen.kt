@@ -58,14 +58,14 @@ fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
         }
         Button(
             onClick = {
-                when {
-                    email == "volunteer@test.com" && password == "password123" -> {
+                when (email) {
+                    "volunteer@test.com" if password == "password123" -> {
                         onRoleSet("VOLUNTEER")
                         navController.navigate(Screen.VolunteerHome.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
-                    email == "ngo@test.com" && password == "password123" -> {
+                    "ngo@test.com" if password == "password123" -> {
                         onRoleSet("NGO")
                         navController.navigate(Screen.NgoDashboard.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
