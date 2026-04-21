@@ -2,7 +2,6 @@ package com.example.assignment_fit5046.components.common
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +17,11 @@ import com.example.assignment_fit5046.components.ngo.NgoNavBar
 import com.example.assignment_fit5046.components.volunteer.VolunteerNavBar
 import com.example.assignment_fit5046.screens.common.LoginScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
+import com.example.assignment_fit5046.screens.ngo.CreateDriveScreen
+import com.example.assignment_fit5046.screens.ngo.DriveApplicationsScreen
+import com.example.assignment_fit5046.screens.ngo.ManageDrivesScreen
+import com.example.assignment_fit5046.screens.ngo.NgoDashboardScreen
+import com.example.assignment_fit5046.screens.ngo.NgoProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.DriveDetailScreen
 import com.example.assignment_fit5046.screens.volunteer.HomeScreen
 import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
@@ -36,6 +40,7 @@ sealed class Screen(val route: String) {
     object CreateDrive : Screen("create_drive")
     object ManageDrives : Screen("manage_drives")
     object NgoProfile : Screen("ngo_profile")
+    object NgoApplications : Screen("ngo_applications")
 }
 
 @Composable
@@ -54,7 +59,7 @@ fun AppNavigation() {
         NavHost(
             navController = navController,
             startDestination = Screen.Login.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Login.route) {
                 LoginScreen(
@@ -88,16 +93,23 @@ fun AppNavigation() {
                 ProfileScreen(navController = navController)
             }
             composable(Screen.NgoDashboard.route) {
-                Text("NgoDashboard Screen")
+                NgoDashboardScreen(navController = navController)
             }
             composable(Screen.CreateDrive.route) {
-                Text("CreateDrive Screen")
+                CreateDriveScreen(navController = navController)
             }
             composable(Screen.ManageDrives.route) {
-                Text("ManageDrives Screen")
+                ManageDrivesScreen(navController = navController)
             }
             composable(Screen.NgoProfile.route) {
-                Text("NgoProfile Screen")
+                NgoProfileScreen(navController = navController)
+            }
+            composable(
+                route = "${Screen.NgoApplications.route}/{driveId}",
+                arguments = listOf(navArgument("driveId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val driveId = backStackEntry.arguments?.getString("driveId") ?: ""
+                DriveApplicationsScreen(navController = navController, driveId = driveId)
             }
         }
     }

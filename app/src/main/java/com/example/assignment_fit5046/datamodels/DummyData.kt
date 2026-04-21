@@ -155,6 +155,51 @@ object DummyData {
         state = "Victoria"
     )
 
+    val NGO_OWN_DRIVES = DRIVES.filter { it.ngoId == "n1" }
+
+    val NGO_RECEIVED_APPLICATIONS = listOf(
+        Application(
+            applicationId = "na1",
+            driveId = "d1",
+            driveTitle = "Yarra River Clean-Up",
+            volunteerId = "v1",
+            volunteerName = "Alex Johnson",
+            status = ApplicationStatus.PENDING,
+            appliedAt = 1744300800000L,
+            message = "I would love to help clean up the Yarra River."
+        ),
+        Application(
+            applicationId = "na2",
+            driveId = "d1",
+            driveTitle = "Yarra River Clean-Up",
+            volunteerId = "v2",
+            volunteerName = "Sarah Chen",
+            status = ApplicationStatus.PENDING,
+            appliedAt = 1744310800000L,
+            message = "Environmental conservation is my passion!"
+        ),
+        Application(
+            applicationId = "na3",
+            driveId = "d1",
+            driveTitle = "Yarra River Clean-Up",
+            volunteerId = "v3",
+            volunteerName = "Marcus Williams",
+            status = ApplicationStatus.APPROVED,
+            appliedAt = 1744290800000L,
+            message = "I have experience with river cleanup events."
+        ),
+        Application(
+            applicationId = "na4",
+            driveId = "d1",
+            driveTitle = "Yarra River Clean-Up",
+            volunteerId = "v4",
+            volunteerName = "Emma Rodriguez",
+            status = ApplicationStatus.REJECTED,
+            appliedAt = 1744280800000L,
+            message = "Would love to participate in any way I can!"
+        )
+    )
+
     val NGO_RESULTS = listOf(
         NgoSearchResponse(
             organizations = OrganizationWrapper(
