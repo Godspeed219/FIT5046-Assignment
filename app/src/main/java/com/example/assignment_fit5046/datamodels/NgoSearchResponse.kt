@@ -2,7 +2,6 @@ package com.example.assignment_fit5046.datamodels
 
 import com.google.gson.annotations.SerializedName
 
-// GlobalGiving organization search API response
 data class NgoSearchResponse(
     @SerializedName("organizations") val organizations: OrganizationWrapper
 )

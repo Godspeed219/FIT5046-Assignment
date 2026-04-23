@@ -59,7 +59,6 @@ fun SearchScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Search text field
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
@@ -73,7 +72,6 @@ fun SearchScreen(navController: NavController) {
                 singleLine = true
             )
 
-            // Cause filter dropdown
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = it },

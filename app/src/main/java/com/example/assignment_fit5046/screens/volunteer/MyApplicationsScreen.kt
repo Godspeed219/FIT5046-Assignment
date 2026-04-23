@@ -77,14 +77,12 @@ private fun ApplicationItem(application: Application) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Drive title
             Text(
                 text = application.driveTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            // NGO name
             if (ngoName.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
@@ -96,7 +94,6 @@ private fun ApplicationItem(application: Application) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Date row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -114,7 +111,6 @@ private fun ApplicationItem(application: Application) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Status chip
             AssistChip(
                 onClick = {},
                 label = { Text(statusLabel, style = MaterialTheme.typography.labelMedium) },

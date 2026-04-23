@@ -60,7 +60,6 @@ fun DriveApplicationsScreen(navController: NavController, driveId: String) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Mutable state for each application's status (so approve/reject updates UI)
     val statusMap = remember {
         mutableStateOf(applications.associate { it.applicationId to it.status })
     }
@@ -144,7 +143,6 @@ private fun ApplicantCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Volunteer name row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -162,7 +160,6 @@ private fun ApplicantCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Applied date
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -178,7 +175,6 @@ private fun ApplicantCard(
                 )
             }
 
-            // Message
             if (application.message.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
@@ -190,7 +186,6 @@ private fun ApplicantCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Status chip
             AssistChip(
                 onClick = {},
                 label = { Text(statusLabel, style = MaterialTheme.typography.labelMedium) },
@@ -204,7 +199,6 @@ private fun ApplicantCard(
                 )
             )
 
-            // Action buttons (only show if pending)
             if (currentStatus == ApplicationStatus.PENDING) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(

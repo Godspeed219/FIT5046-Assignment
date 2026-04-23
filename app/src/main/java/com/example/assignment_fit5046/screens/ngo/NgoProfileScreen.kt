@@ -63,7 +63,6 @@ fun NgoProfileScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Organisation icon placeholder
             Icon(
                 imageVector = Icons.Default.Business,
                 contentDescription = null,
@@ -73,7 +72,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Organisation name
             OutlinedTextField(
                 value = orgName,
                 onValueChange = { orgName = it },
@@ -84,7 +82,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Mission / description
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -96,7 +93,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // City
             OutlinedTextField(
                 value = city,
                 onValueChange = { city = it },
@@ -107,7 +103,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Website
             OutlinedTextField(
                 value = website,
                 onValueChange = { website = it },
@@ -118,7 +113,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Phone
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
@@ -129,7 +123,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Email (read-only)
             OutlinedTextField(
                 value = email,
                 onValueChange = {},
@@ -141,7 +134,6 @@ fun NgoProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Save button
             Button(
                 onClick = {
                     scope.launch {

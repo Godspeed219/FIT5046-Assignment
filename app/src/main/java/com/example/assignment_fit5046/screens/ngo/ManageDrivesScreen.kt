@@ -57,7 +57,6 @@ fun ManageDrivesScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Status filter dropdown
             ExposedDropdownMenuBox(
                 expanded = filterExpanded,
                 onExpandedChange = { filterExpanded = it },

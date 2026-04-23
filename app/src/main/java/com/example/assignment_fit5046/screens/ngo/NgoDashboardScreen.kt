@@ -51,8 +51,6 @@ fun NgoDashboardScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
-            // Welcome header
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                     Text(
@@ -68,7 +66,6 @@ fun NgoDashboardScreen(navController: NavController) {
                 }
             }
 
-            // Stats row
             item {
                 Row(
                     modifier = Modifier
@@ -99,7 +96,6 @@ fun NgoDashboardScreen(navController: NavController) {
 
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
-            // Section header
             item {
                 Text(
                     text = "Your Active Drives",
@@ -109,7 +105,6 @@ fun NgoDashboardScreen(navController: NavController) {
                 )
             }
 
-            // Drive cards
             items(ownDrives) { drive ->
                 val appCount = DummyData.NGO_RECEIVED_APPLICATIONS.count { it.driveId == drive.driveId }
                 DriveManageCard(

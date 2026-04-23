@@ -71,7 +71,6 @@ fun ProfileScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Profile icon placeholder
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = null,
@@ -81,7 +80,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Name field
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -92,7 +90,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Bio field
             OutlinedTextField(
                 value = bio,
                 onValueChange = { bio = it },
@@ -104,7 +101,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // City field
             OutlinedTextField(
                 value = city,
                 onValueChange = { city = it },
@@ -115,7 +111,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Set availability date button
             OutlinedButton(
                 onClick = { showDatePicker = true },
                 modifier = Modifier.fillMaxWidth()
@@ -133,7 +128,6 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Save button
             Button(
                 onClick = {
                     scope.launch {
@@ -149,7 +143,6 @@ fun ProfileScreen(navController: NavController) {
         }
     }
 
-    // Date picker dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },

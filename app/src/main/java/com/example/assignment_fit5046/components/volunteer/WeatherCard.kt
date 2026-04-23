@@ -37,7 +37,6 @@ fun WeatherCard(weather: WeatherResponse) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Temperature + condition row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.WbSunny,
@@ -62,7 +61,6 @@ fun WeatherCard(weather: WeatherResponse) {
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Wind row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.Air,

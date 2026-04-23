@@ -77,7 +77,6 @@ fun CreateDriveScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Drive title
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -88,7 +87,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Description
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -100,7 +98,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Location
             OutlinedTextField(
                 value = location,
                 onValueChange = { location = it },
@@ -111,7 +108,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Max volunteers
             OutlinedTextField(
                 value = maxVolunteers,
                 onValueChange = { maxVolunteers = it },
@@ -123,7 +119,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Category dropdown
             ExposedDropdownMenuBox(
                 expanded = categoryExpanded,
                 onExpandedChange = { categoryExpanded = it },
@@ -159,7 +154,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Date picker button
             OutlinedButton(
                 onClick = { showDatePicker = true },
                 modifier = Modifier.fillMaxWidth()
@@ -177,7 +171,6 @@ fun CreateDriveScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Post drive button
             Button(
                 onClick = {
                     scope.launch {
@@ -193,7 +186,6 @@ fun CreateDriveScreen(navController: NavController) {
         }
     }
 
-    // Date picker dialog
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },

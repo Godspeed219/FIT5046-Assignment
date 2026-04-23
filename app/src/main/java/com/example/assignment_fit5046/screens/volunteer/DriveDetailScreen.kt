@@ -74,7 +74,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 .padding(paddingValues)
         ) {
 
-            // NGO name + cause chip
             item {
                 Row(
                     modifier = Modifier
@@ -101,7 +100,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 }
             }
 
-            // Description
             item {
                 Text(
                     text = drive.description,
@@ -112,7 +110,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
 
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
 
-            // Event Details header
             item {
                 Text(
                     text = "Event Details",
@@ -122,7 +119,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 )
             }
 
-            // Date
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -139,7 +135,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 }
             }
 
-            // Address
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -156,7 +151,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 }
             }
 
-            // Indoor / Outdoor
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -176,7 +170,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 }
             }
 
-            // Volunteers needed
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -198,14 +191,12 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
 
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
 
-            // Weather card
             item {
                 WeatherCard(weather = DummyData.WEATHER)
             }
 
             item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
 
-            // Getting There header
             item {
                 Text(
                     text = "Getting There",
@@ -215,7 +206,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 )
             }
 
-            // Distance
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -232,7 +222,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
                 }
             }
 
-            // Duration
             item {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
@@ -251,7 +240,6 @@ fun DriveDetailScreen(navController: NavController, driveId: String) {
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
 
-            // Apply Now button
             item {
                 Button(
                     onClick = {

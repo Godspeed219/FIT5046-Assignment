@@ -8,7 +8,7 @@ data class User(
     val phoneNumber: String = "",
     val bio: String = "",
     val profileImageUrl: String = "",
-    // NGO-only fields
+
     val ngoName: String = "",
     val ngoDescription: String = ""
 )

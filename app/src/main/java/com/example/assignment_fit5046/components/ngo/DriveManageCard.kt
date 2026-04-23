@@ -44,7 +44,6 @@ fun DriveManageCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Title row + category chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -74,7 +73,6 @@ fun DriveManageCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Date row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -88,7 +86,6 @@ fun DriveManageCard(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Location row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
@@ -102,7 +99,6 @@ fun DriveManageCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Applications count + status chip row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -146,7 +142,6 @@ fun DriveManageCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // View applications button
             OutlinedButton(
                 onClick = onViewApplications,
                 modifier = Modifier.fillMaxWidth()

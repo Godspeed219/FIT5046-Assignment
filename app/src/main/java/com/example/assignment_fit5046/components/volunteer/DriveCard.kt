@@ -37,7 +37,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Title row + cause chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -63,7 +62,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
                 )
             }
 
-            // NGO name
             Text(
                 text = drive.ngoName,
                 style = MaterialTheme.typography.bodyMedium,
@@ -72,7 +70,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Date row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -86,7 +83,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Location row
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
@@ -100,7 +96,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Indoor / Outdoor badge
             val isIndoor = drive.category in listOf("Education", "Health")
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -118,7 +113,6 @@ fun DriveCard(drive: Drive, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Volunteers needed
             Text(
                 text = "${drive.maxVolunteers - drive.currentVolunteers} volunteers needed",
                 style = MaterialTheme.typography.bodySmall,
