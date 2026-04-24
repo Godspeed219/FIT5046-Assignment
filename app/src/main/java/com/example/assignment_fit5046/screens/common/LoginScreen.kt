@@ -8,7 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
@@ -29,6 +35,7 @@ fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -48,8 +55,23 @@ fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                val description = if (passwordVisible) "Hide password" else "Show password"
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = icon, contentDescription = description)
+                }
+            },
             modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Forgot Password?",
+            color = Color(0xFF6200EE),
+            modifier = Modifier
+                .align(Alignment.End)
+                .clickable { /* TODO: trigger Firebase password reset */ }
         )
         Spacer(modifier = Modifier.height(16.dp))
         if (errorMessage.isNotEmpty()) {
@@ -58,14 +80,14 @@ fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
         }
         Button(
             onClick = {
-                when (email) {
-                    "volunteer@test.com" if password == "password123" -> {
+                when {
+                    email == "volunteer@test.com" && password == "password123" -> {
                         onRoleSet("VOLUNTEER")
                         navController.navigate(Screen.VolunteerHome.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
-                    "ngo@test.com" if password == "password123" -> {
+                    email == "ngo@test.com" && password == "password123" -> {
                         onRoleSet("NGO")
                         navController.navigate(Screen.NgoDashboard.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
