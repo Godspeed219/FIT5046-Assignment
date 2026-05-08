@@ -24,9 +24,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
+import com.example.assignment_fit5046.datamodels.UserRole
 
 @Composable
-fun RegisterScreen(navController: NavController, onRoleSet: (String) -> Unit) {
+fun RegisterScreen(navController: NavController, onRoleSet: (UserRole) -> Unit) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -89,13 +90,13 @@ fun RegisterScreen(navController: NavController, onRoleSet: (String) -> Unit) {
             onClick = {
                 when (selectedRole) {
                     "Volunteer" -> {
-                        onRoleSet("VOLUNTEER")
+                        onRoleSet(UserRole.VOLUNTEER)
                         navController.navigate(Screen.VolunteerHome.route) {
                             popUpTo(0) { inclusive = true }
                         }
                     }
                     "NGO" -> {
-                        onRoleSet("NGO")
+                        onRoleSet(UserRole.NGO)
                         navController.navigate(Screen.NgoDashboard.route) {
                             popUpTo(0) { inclusive = true }
                         }

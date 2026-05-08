@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.assignment_fit5046.components.ngo.NgoNavBar
 import com.example.assignment_fit5046.components.volunteer.VolunteerNavBar
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.screens.common.LoginScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
 import com.example.assignment_fit5046.screens.ngo.CreateDriveScreen
@@ -44,15 +45,16 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(onRoleChanged: (UserRole) -> Unit = {}) {
     val navController = rememberNavController()
-    var currentRole by remember { mutableStateOf("") }
+    var currentRole by remember { mutableStateOf<UserRole?>(null) }
 
     Scaffold(
         bottomBar = {
             when (currentRole) {
-                "VOLUNTEER" -> VolunteerNavBar(navController = navController)
-                "NGO" -> NgoNavBar(navController = navController)
+                UserRole.VOLUNTEER -> VolunteerNavBar(navController = navController)
+                UserRole.NGO -> NgoNavBar(navController = navController)
+                null -> {}
             }
         }
     ) { innerPadding ->
@@ -64,13 +66,19 @@ fun AppNavigation() {
             composable(Screen.Login.route) {
                 LoginScreen(
                     navController = navController,
-                    onRoleSet = { role -> currentRole = role }
+                    onRoleSet = { role ->
+                        currentRole = role
+                        onRoleChanged(role)
+                    }
                 )
             }
             composable(Screen.Register.route) {
                 RegisterScreen(
                     navController = navController,
-                    onRoleSet = { role -> currentRole = role }
+                    onRoleSet = { role ->
+                        currentRole = role
+                        onRoleChanged(role)
+                    }
                 )
             }
             composable(Screen.VolunteerHome.route) {

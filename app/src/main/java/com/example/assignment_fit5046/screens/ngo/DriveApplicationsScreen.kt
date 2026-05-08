@@ -39,13 +39,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.DummyData
+import com.example.assignment_fit5046.ui.StatusApproved
+import com.example.assignment_fit5046.ui.StatusApprovedContainer
+import com.example.assignment_fit5046.ui.StatusPending
+import com.example.assignment_fit5046.ui.StatusRejected
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -131,9 +134,9 @@ private fun ApplicantCard(
     val formattedDate = dateFormatter.format(Date(application.appliedAt))
 
     val (statusLabel, statusColor) = when (currentStatus) {
-        ApplicationStatus.APPROVED -> "Approved" to Color(0xFF2E7D32)
-        ApplicationStatus.PENDING -> "Pending" to Color(0xFFE65100)
-        ApplicationStatus.REJECTED -> "Rejected" to Color(0xFFC62828)
+        ApplicationStatus.APPROVED -> "Approved" to StatusApproved
+        ApplicationStatus.PENDING -> "Pending" to StatusPending
+        ApplicationStatus.REJECTED -> "Rejected" to StatusRejected
     }
 
     ElevatedCard(
@@ -209,7 +212,7 @@ private fun ApplicantCard(
                         onClick = onApprove,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF2E7D32)
+                            containerColor = StatusApproved
                         )
                     ) {
                         Text("Approve")
@@ -218,7 +221,7 @@ private fun ApplicantCard(
                         onClick = onReject,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color(0xFFC62828)
+                            contentColor = StatusRejected
                         )
                     ) {
                         Text("Reject")

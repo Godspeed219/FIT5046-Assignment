@@ -23,15 +23,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
+import com.example.assignment_fit5046.datamodels.UserRole
 
 @Composable
-fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
+fun LoginScreen(navController: NavController, onRoleSet: (UserRole) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
@@ -68,27 +69,27 @@ fun LoginScreen(navController: NavController, onRoleSet: (String) -> Unit) {
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = "Forgot Password?",
-            color = Color(0xFF6200EE),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .align(Alignment.End)
                 .clickable { /* TODO: trigger Firebase password reset */ }
         )
         Spacer(modifier = Modifier.height(16.dp))
         if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = Color.Red)
+            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
             Spacer(modifier = Modifier.height(8.dp))
         }
         Button(
             onClick = {
-                when {
-                    email == "volunteer@test.com" && password == "password123" -> {
-                        onRoleSet("VOLUNTEER")
+                when (email) {
+                    "volunteer@test.com" if password == "password123" -> {
+                        onRoleSet(UserRole.VOLUNTEER)
                         navController.navigate(Screen.VolunteerHome.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
-                    email == "ngo@test.com" && password == "password123" -> {
-                        onRoleSet("NGO")
+                    "ngo@test.com" if password == "password123" -> {
+                        onRoleSet(UserRole.NGO)
                         navController.navigate(Screen.NgoDashboard.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }

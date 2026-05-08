@@ -25,8 +25,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import com.example.assignment_fit5046.ui.StatusApproved
+import com.example.assignment_fit5046.ui.StatusPending
+import com.example.assignment_fit5046.ui.StatusRejected
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.datamodels.Application
@@ -65,9 +67,9 @@ private fun ApplicationItem(application: Application) {
     val ngoName = matchedDrive?.ngoName ?: ""
 
     val (statusLabel, statusColor) = when (application.status) {
-        ApplicationStatus.APPROVED -> "Accepted" to Color(0xFF2E7D32)
-        ApplicationStatus.PENDING -> "Pending" to Color(0xFFE65100)
-        ApplicationStatus.REJECTED -> "Rejected" to Color(0xFFC62828)
+        ApplicationStatus.APPROVED -> "Accepted" to StatusApproved
+        ApplicationStatus.PENDING -> "Pending" to StatusPending
+        ApplicationStatus.REJECTED -> "Rejected" to StatusRejected
     }
 
     ElevatedCard(

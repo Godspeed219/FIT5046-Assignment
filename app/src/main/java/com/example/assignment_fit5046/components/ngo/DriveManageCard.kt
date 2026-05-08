@@ -25,8 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import com.example.assignment_fit5046.ui.StatusApproved
+import com.example.assignment_fit5046.ui.TextSecondary
 import androidx.compose.ui.unit.dp
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
@@ -121,8 +122,8 @@ fun DriveManageCard(
                 }
 
                 val (statusLabel, statusColor) = when (drive.status) {
-                    DriveStatus.ACTIVE -> "Active" to Color(0xFF2E7D32)
-                    DriveStatus.CLOSED -> "Closed" to Color(0xFF757575)
+                    DriveStatus.ACTIVE -> "Active" to StatusApproved
+                    DriveStatus.CLOSED -> "Closed" to TextSecondary
                 }
                 AssistChip(
                     onClick = {},
