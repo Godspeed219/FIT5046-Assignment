@@ -11,8 +11,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -36,7 +38,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NgoProfileScreen(navController: NavController) {
+fun NgoProfileScreen(navController: NavController, onSignOut: () -> Unit = {}) {
     var orgName by remember { mutableStateOf(DummyData.NGO_USER.ngoName) }
     var description by remember { mutableStateOf(DummyData.NGO_USER.ngoDescription) }
     var city by remember { mutableStateOf("Melbourne") }
@@ -49,7 +51,18 @@ fun NgoProfileScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Organisation Profile") })
+            TopAppBar(
+                title = { Text("Organisation Profile") },
+                actions = {
+                    IconButton(onClick = onSignOut) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
+                            contentDescription = "Sign out",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->

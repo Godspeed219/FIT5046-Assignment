@@ -3,6 +3,8 @@ package com.example.assignment_fit5046.components.common
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,6 +30,8 @@ import com.example.assignment_fit5046.screens.volunteer.HomeScreen
 import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
 import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.SearchScreen
+import com.example.assignment_fit5046.services.viewmodel.AuthState
+import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -45,9 +49,37 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavigation(onRoleChanged: (UserRole) -> Unit = {}) {
+fun AppNavigation(
+    authViewModel: AuthViewModel,
+    onRoleChanged: (UserRole) -> Unit = {}
+) {
     val navController = rememberNavController()
+    val authState by authViewModel.authState.collectAsState()
     var currentRole by remember { mutableStateOf<UserRole?>(null) }
+
+    // Central auth-driven navigation
+    LaunchedEffect(authState) {
+        when (val state = authState) {
+            is AuthState.LoggedIn -> {
+                currentRole = state.user.role
+                onRoleChanged(state.user.role)
+                val dest = if (state.user.role == UserRole.VOLUNTEER)
+                    Screen.VolunteerHome.route else Screen.NgoDashboard.route
+                navController.navigate(dest) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+            is AuthState.LoggedOut -> {
+                currentRole = null
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+            else -> {}
+        }
+    }
+
+    val onSignOut: () -> Unit = { authViewModel.signOut() }
 
     Scaffold(
         bottomBar = {
@@ -64,22 +96,10 @@ fun AppNavigation(onRoleChanged: (UserRole) -> Unit = {}) {
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Login.route) {
-                LoginScreen(
-                    navController = navController,
-                    onRoleSet = { role ->
-                        currentRole = role
-                        onRoleChanged(role)
-                    }
-                )
+                LoginScreen(navController = navController, authViewModel = authViewModel)
             }
             composable(Screen.Register.route) {
-                RegisterScreen(
-                    navController = navController,
-                    onRoleSet = { role ->
-                        currentRole = role
-                        onRoleChanged(role)
-                    }
-                )
+                RegisterScreen(navController = navController, authViewModel = authViewModel)
             }
             composable(Screen.VolunteerHome.route) {
                 HomeScreen(navController = navController)
@@ -98,7 +118,7 @@ fun AppNavigation(onRoleChanged: (UserRole) -> Unit = {}) {
                 MyApplicationsScreen(navController = navController)
             }
             composable(Screen.VolunteerProfile.route) {
-                ProfileScreen(navController = navController)
+                ProfileScreen(navController = navController, onSignOut = onSignOut)
             }
             composable(Screen.NgoDashboard.route) {
                 NgoDashboardScreen(navController = navController)
@@ -110,7 +130,7 @@ fun AppNavigation(onRoleChanged: (UserRole) -> Unit = {}) {
                 ManageDrivesScreen(navController = navController)
             }
             composable(Screen.NgoProfile.route) {
-                NgoProfileScreen(navController = navController)
+                NgoProfileScreen(navController = navController, onSignOut = onSignOut)
             }
             composable(
                 route = "${Screen.NgoApplications.route}/{driveId}",
