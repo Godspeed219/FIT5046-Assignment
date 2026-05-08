@@ -1,4 +1,4 @@
-package com.example.volunteerlink_fit5046.datamodels
+package com.example.assignment_fit5046.datamodels
 
 data class User(
     val uid: String = "",
@@ -8,7 +8,7 @@ data class User(
     val phoneNumber: String = "",
     val bio: String = "",
     val profileImageUrl: String = "",
-    // NGO-only fields
+
     val ngoName: String = "",
     val ngoDescription: String = ""
 )

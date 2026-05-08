@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.volunteerlink_fit5046"
+    namespace = "com.example.assignment_fit5046"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.volunteerlink_fit5046"
+        applicationId = "com.example.assignment_fit5046"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
