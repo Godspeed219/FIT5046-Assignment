@@ -1,6 +1,9 @@
 package com.example.assignment_fit5046.services.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.assignment_fit5046.datamodels.Application as VolunteerApplication
@@ -10,10 +13,17 @@ import com.example.assignment_fit5046.datamodels.DriveStatus
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -59,7 +69,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         _ngoApplications.value = allApplications
                     }
-                    .onFailure { _errorMessage.value = it.message }
+                    .onFailure { _errorMessage.value = it.message; Log.e(
+                        "FAILURE QUERY",
+                        _errorMessage.value.toString(),
+
+                    ) }
             } finally {
                 _isLoading.value = false
             }
@@ -73,7 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 DriveService.createDrive(drive)
                     .onSuccess { created ->
                         driveDao.insertDrive(created)
-                        _ngoDrives.value = _ngoDrives.value + created
+                        _ngoDrives.value += created
                         _successMessage.value = "Drive posted successfully"
                     }
                     .onFailure { _errorMessage.value = it.message }
@@ -124,6 +138,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 .onFailure { _errorMessage.value = it.message }
+        }
+    }
+
+    fun uploadDriveBanner(imageUri: Uri, context: Context, onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val secureUrl = withContext(Dispatchers.IO) {
+                    val bytes = context.contentResolver.openInputStream(imageUri)?.readBytes()
+                        ?: return@withContext null
+
+                    val boundary = "Boundary_${System.currentTimeMillis()}"
+                    val conn = URL("https://api.cloudinary.com/v1_1/dhdbdnvd3ly/image/upload")
+                        .openConnection() as HttpURLConnection
+                    conn.requestMethod = "POST"
+                    conn.doOutput = true
+                    conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=$boundary")
+
+                    val out = conn.outputStream
+                    val writer = PrintWriter(OutputStreamWriter(out, "UTF-8"), true)
+
+                    writer.append("--$boundary\r\n")
+                    writer.append("Content-Disposition: form-data; name=\"upload_preset\"\r\n\r\n")
+                    writer.append("VolunteerLink\r\n")
+                    writer.flush()
+
+                    writer.append("--$boundary\r\n")
+                    writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"banner.jpg\"\r\n")
+                    writer.append("Content-Type: application/octet-stream\r\n\r\n")
+                    writer.flush()
+                    out.write(bytes)
+                    out.flush()
+                    writer.append("\r\n")
+                    writer.append("--$boundary--\r\n")
+                    writer.flush()
+
+                    if (conn.responseCode == HttpURLConnection.HTTP_OK) {
+                        val response = conn.inputStream.bufferedReader().readText()
+                        JSONObject(response).getString("secure_url")
+                    } else {
+                        null
+                    }
+                }
+                if (secureUrl == null) _errorMessage.value = "Failed to upload image"
+                onResult(secureUrl)
+            } catch (e: Exception) {
+                _errorMessage.value = e.message
+                onResult(null)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

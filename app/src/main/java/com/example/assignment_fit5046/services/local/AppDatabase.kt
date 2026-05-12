@@ -12,7 +12,7 @@ import com.example.assignment_fit5046.services.local.dao.ApplicationDao
 import com.example.assignment_fit5046.services.local.dao.DriveDao
 import com.example.assignment_fit5046.services.local.dao.UserDao
 
-@Database(entities = [User::class, Drive::class, Application::class], version = 1, exportSchema = false)
+@Database(entities = [User::class, Drive::class, Application::class], version = 2, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao

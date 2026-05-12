@@ -22,6 +22,7 @@ import com.example.assignment_fit5046.screens.common.LoginScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
 import com.example.assignment_fit5046.screens.ngo.CreateDriveScreen
 import com.example.assignment_fit5046.screens.ngo.DriveApplicationsScreen
+import com.example.assignment_fit5046.screens.ngo.DriveConfirmationScreen
 import com.example.assignment_fit5046.screens.ngo.ManageDrivesScreen
 import com.example.assignment_fit5046.screens.ngo.NgoDashboardScreen
 import com.example.assignment_fit5046.screens.ngo.NgoProfileScreen
@@ -48,6 +49,7 @@ sealed class Screen(val route: String) {
     object ManageDrives : Screen("manage_drives")
     object NgoProfile : Screen("ngo_profile")
     object NgoApplications : Screen("ngo_applications")
+    object DriveConfirmation : Screen("drive_confirmation")
 }
 
 @Composable
@@ -131,7 +133,14 @@ fun AppNavigation(
                 )
             }
             composable(Screen.CreateDrive.route) {
-                CreateDriveScreen(navController = navController)
+                CreateDriveScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
+            }
+            composable(Screen.DriveConfirmation.route) {
+                DriveConfirmationScreen(navController = navController)
             }
             composable(Screen.ManageDrives.route) {
                 ManageDrivesScreen(navController = navController)

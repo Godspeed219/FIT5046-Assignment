@@ -10,19 +10,19 @@ The app is a **working prototype** using Jetpack Compose with static dummy data.
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Kotlin |
-| UI Framework | Jetpack Compose + Material3 |
-| Navigation | Navigation Compose 2.9.7 |
-| Local DB | Room 2.8.4 (entity models defined, DAOs are stubs) |
-| Remote API | Retrofit 3.0.0 + Gson (interface files are stubs) |
-| Image Loading | Coil 2.7.0 |
-| Backend / Auth | Firebase BOM 34.12.0 (Auth + Firestore + Analytics) |
-| Architecture | MVVM (ViewModels are stubs) |
-| Build Tool | Gradle with KSP (Kotlin Symbol Processing) |
-| Min SDK | 24 (Android 7.0) |
-| Target/Compile SDK | 36 |
+| Layer              | Technology                                          |
+| ------------------ | --------------------------------------------------- |
+| Language           | Kotlin                                              |
+| UI Framework       | Jetpack Compose + Material3                         |
+| Navigation         | Navigation Compose 2.9.7                            |
+| Local DB           | Room 2.8.4 (entity models defined, DAOs are stubs)  |
+| Remote API         | Retrofit 3.0.0 + Gson (interface files are stubs)   |
+| Image Loading      | Coil 2.7.0                                          |
+| Backend / Auth     | Firebase BOM 34.12.0 (Auth + Firestore + Analytics) |
+| Architecture       | MVVM (ViewModels are stubs)                         |
+| Build Tool         | Gradle with KSP (Kotlin Symbol Processing)          |
+| Min SDK            | 24 (Android 7.0)                                    |
+| Target/Compile SDK | 36                                                  |
 
 ---
 
@@ -126,20 +126,20 @@ FIT5046-Assignment/
 
 All routes are defined in `AppNavigation.kt` as a sealed class `Screen`:
 
-| Route Constant | Path | Notes |
-|---|---|---|
-| `Screen.Login` | `login` | Start destination |
-| `Screen.Register` | `register` | |
-| `Screen.VolunteerHome` | `volunteer_home` | |
-| `Screen.DriveDetail` | `drive_detail/{driveId}` | driveId = String path arg |
-| `Screen.Search` | `search` | |
-| `Screen.MyApplications` | `my_applications` | |
-| `Screen.VolunteerProfile` | `volunteer_profile` | |
-| `Screen.NgoDashboard` | `ngo_dashboard` | |
-| `Screen.CreateDrive` | `create_drive` | |
-| `Screen.ManageDrives` | `manage_drives` | |
-| `Screen.NgoProfile` | `ngo_profile` | |
-| `Screen.NgoApplications` | `ngo_applications/{driveId}` | driveId = String path arg |
+| Route Constant            | Path                         | Notes                     |
+| ------------------------- | ---------------------------- | ------------------------- |
+| `Screen.Login`            | `login`                      | Start destination         |
+| `Screen.Register`         | `register`                   |                           |
+| `Screen.VolunteerHome`    | `volunteer_home`             |                           |
+| `Screen.DriveDetail`      | `drive_detail/{driveId}`     | driveId = String path arg |
+| `Screen.Search`           | `search`                     |                           |
+| `Screen.MyApplications`   | `my_applications`            |                           |
+| `Screen.VolunteerProfile` | `volunteer_profile`          |                           |
+| `Screen.NgoDashboard`     | `ngo_dashboard`              |                           |
+| `Screen.CreateDrive`      | `create_drive`               |                           |
+| `Screen.ManageDrives`     | `manage_drives`              |                           |
+| `Screen.NgoProfile`       | `ngo_profile`                |                           |
+| `Screen.NgoApplications`  | `ngo_applications/{driveId}` | driveId = String path arg |
 
 The `AppNavigation` composable uses a `Scaffold` with a `NavHost`. The `currentRole` state (either `"VOLUNTEER"` or `"NGO"`) drives which bottom nav bar (`VolunteerNavBar` or `NgoNavBar`) is shown.
 
@@ -149,10 +149,10 @@ The `AppNavigation` composable uses a `Scaffold` with a `NavHost`. The `currentR
 
 Authentication is currently **hardcoded** (no Firebase Auth call yet):
 
-| Email | Password | Role navigated to |
-|---|---|---|
+| Email                | Password      | Role navigated to           |
+| -------------------- | ------------- | --------------------------- |
 | `volunteer@test.com` | `password123` | VOLUNTEER → `VolunteerHome` |
-| `ngo@test.com` | `password123` | NGO → `NgoDashboard` |
+| `ngo@test.com`       | `password123` | NGO → `NgoDashboard`        |
 
 "Forgot Password?" is a clickable text with a `// TODO` comment. Registration simply navigates by the selected radio button without any backend call.
 
@@ -163,6 +163,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ### Common Screens (both roles)
 
 #### `LoginScreen.kt` — COMPLETE (prototype)
+
 - Email and password `OutlinedTextField`
 - Password show/hide toggle using `Visibility`/`VisibilityOff` icons
 - "Forgot Password?" clickable text (TODO stub)
@@ -170,6 +171,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Navigates to `VolunteerHome` or `NgoDashboard` based on email; clears back stack
 
 #### `RegisterScreen.kt` — COMPLETE (prototype)
+
 - Name, Email, Password fields
 - Radio buttons to select role: **Volunteer** or **NGO**
 - On submit navigates to the appropriate home screen; clears entire back stack
@@ -180,6 +182,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ### Volunteer Screens
 
 #### `HomeScreen.kt` — COMPLETE
+
 - `TopAppBar` with title "VolunteerLink"
 - `LazyColumn` containing:
   - A `QuoteCard` at the top (static quote from DummyData)
@@ -188,6 +191,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Tapping any `DriveCard` navigates to `DriveDetailScreen` passing `drive.driveId`
 
 #### `SearchScreen.kt` — COMPLETE
+
 - `OutlinedTextField` for free-text search (filters by drive title, case-insensitive)
 - `ExposedDropdownMenuBox` for category filter with options: `All`, `Environment`, `Education`, `Health`, `Animal Welfare`, `Community`
 - Filters `DummyData.DRIVES` by both criteria simultaneously
@@ -195,6 +199,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Results rendered as `DriveCard` list; tapping navigates to `DriveDetailScreen`
 
 #### `DriveDetailScreen.kt` — COMPLETE
+
 - Back arrow `IconButton` in `TopAppBar`
 - Displays: NGO name, category `SuggestionChip`, description
 - Event Details section with icons: date (`CalendarToday`), location (`LocationOn`), indoor/outdoor (`Home`/`Park` based on category), volunteer spots remaining (`Group`)
@@ -204,6 +209,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Indoor classification: categories `Education` and `Health` are indoor; all others outdoor
 
 #### `MyApplicationsScreen.kt` — COMPLETE
+
 - Lists `DummyData.APPLICATIONS` (3 entries for the prototype volunteer)
 - Each item is an `ElevatedCard` (`ApplicationItem`) showing:
   - Drive title (bold)
@@ -215,6 +221,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
     - REJECTED → red `0xFFC62828`
 
 #### `ProfileScreen.kt` — COMPLETE
+
 - Pre-filled from `DummyData.VOLUNTEER_USER` (name: "Alex Johnson", bio: "Passionate about giving back")
 - Editable fields: Name, Bio (3-line min), City
 - "Set Availability Date" `OutlinedButton` opens a Material3 `DatePickerDialog`
@@ -227,6 +234,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ### NGO Screens
 
 #### `NgoDashboardScreen.kt` — COMPLETE
+
 - "Welcome back, [NGO Name]" greeting from `DummyData.NGO_USER.ngoName`
 - Three stat cards in a row (using private `StatCard` composable):
   - **Drives** — count of `NGO_OWN_DRIVES`
@@ -236,6 +244,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Tapping "View Applications" on a card navigates to `DriveApplicationsScreen/{driveId}`
 
 #### `CreateDriveScreen.kt` — COMPLETE
+
 - Scrollable form with:
   - Drive Title (single line)
   - Description (3–5 lines)
@@ -246,12 +255,14 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - "Post Drive" button shows Snackbar "Drive posted successfully!" (no backend call yet)
 
 #### `ManageDrivesScreen.kt` — COMPLETE
+
 - Status filter dropdown: `All`, `Active`, `Closed` — filters `DummyData.NGO_OWN_DRIVES` by `DriveStatus` enum
 - Empty-state message when filter yields no results
 - Results shown via `DriveManageCard` with application counts
 - "View Applications" navigates to `DriveApplicationsScreen/{driveId}`
 
 #### `DriveApplicationsScreen.kt` — COMPLETE
+
 - Shows count header "X applications received"
 - Filters `DummyData.NGO_RECEIVED_APPLICATIONS` by the passed `driveId`
 - Each applicant is an `ApplicantCard` (private composable) with:
@@ -264,6 +275,7 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 - Snackbar feedback on approve/reject: "[Name] approved!" or "[Name] rejected."
 
 #### `NgoProfileScreen.kt` — COMPLETE
+
 - Large `Business` icon as avatar placeholder
 - Pre-filled from `DummyData.NGO_USER`: orgName, description, phone, email
 - Editable fields: Organisation Name, Mission/Description (3–5 lines), City, Website (optional), Phone
@@ -277,19 +289,23 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ### Volunteer Components
 
 #### `DriveCard.kt`
+
 - `ElevatedCard` — tappable (`onClick` lambda)
 - Shows: title, category `SuggestionChip` (primaryContainer), NGO name, date with `CalendarToday` icon, location with `LocationOn` icon, indoor/outdoor icon, spots remaining in primary color
 
 #### `QuoteCard.kt`
+
 - `Card` with `primaryContainer` background
 - Large `"` character (52sp), italic quote content, right-aligned bold author attribution
 
 #### `WeatherCard.kt`
+
 - `OutlinedCard` titled "Weather on Drive Day"
 - Row 1: `WbSunny` icon, temperature in °C, weather description (capitalised)
 - Row 2: `Air` icon, wind speed in km/h
 
 #### `VolunteerNavBar.kt`
+
 - `NavigationBar` with 4 items: **Home** (`Home`), **Search** (`Search`), **Applications** (`List`), **Profile** (`Person`)
 - Highlights active item by comparing `currentRoute` to each route
 - Uses `popUpTo(VolunteerHome)` + `saveState`/`restoreState` for proper back-stack management
@@ -297,10 +313,12 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ### NGO Components
 
 #### `DriveManageCard.kt`
+
 - `ElevatedCard` showing: title, category chip, date, location, application count (People icon + primary color), status chip (`Active`=green / `Closed`=grey)
 - Full-width "View Applications (N)" `OutlinedButton`
 
 #### `NgoNavBar.kt`
+
 - `NavigationBar` with 4 items: **Dashboard** (`Home`), **Create** (`Add`), **Manage** (`Edit`), **Profile** (`Person`)
 - Same active-highlight and back-stack logic as `VolunteerNavBar`
 
@@ -309,56 +327,63 @@ Authentication is currently **hardcoded** (no Firebase Auth call yet):
 ## Data Models
 
 ### `Drive.kt` — Room `@Entity(tableName = "drives")`
-| Field | Type | Notes |
-|---|---|---|
-| `driveId` | String | `@PrimaryKey` |
-| `ngoId` | String | |
-| `ngoName` | String | Denormalised for display |
-| `title` | String | |
-| `description` | String | |
-| `location` | String | Full address string |
-| `date` | String | "YYYY-MM-DD" |
-| `maxVolunteers` | Int | |
-| `currentVolunteers` | Int | |
-| `category` | String | Environment / Education / Health / Animal Welfare / Community |
-| `status` | DriveStatus | `ACTIVE` or `CLOSED` |
-| `createdAt` | Long | Unix epoch milliseconds |
+
+| Field               | Type        | Notes                                                         |
+| ------------------- | ----------- | ------------------------------------------------------------- |
+| `driveId`           | String      | `@PrimaryKey`                                                 |
+| `ngoId`             | String      |                                                               |
+| `ngoName`           | String      | Denormalised for display                                      |
+| `title`             | String      |                                                               |
+| `description`       | String      |                                                               |
+| `location`          | String      | Full address string                                           |
+| `date`              | String      | "YYYY-MM-DD"                                                  |
+| `maxVolunteers`     | Int         |                                                               |
+| `currentVolunteers` | Int         |                                                               |
+| `category`          | String      | Environment / Education / Health / Animal Welfare / Community |
+| `status`            | DriveStatus | `ACTIVE` or `CLOSED`                                          |
+| `createdAt`         | Long        | Unix epoch milliseconds                                       |
 
 ### `Application.kt` — Room `@Entity(tableName = "applications")`
-| Field | Type | Notes |
-|---|---|---|
-| `applicationId` | String | `@PrimaryKey` |
-| `driveId` | String | FK to drives |
-| `driveTitle` | String | Denormalised |
-| `volunteerId` | String | |
-| `volunteerName` | String | Denormalised |
-| `status` | ApplicationStatus | `PENDING`, `APPROVED`, `REJECTED` |
-| `appliedAt` | Long | Unix epoch milliseconds |
-| `message` | String | Optional cover message |
+
+| Field           | Type              | Notes                             |
+| --------------- | ----------------- | --------------------------------- |
+| `applicationId` | String            | `@PrimaryKey`                     |
+| `driveId`       | String            | FK to drives                      |
+| `driveTitle`    | String            | Denormalised                      |
+| `volunteerId`   | String            |                                   |
+| `volunteerName` | String            | Denormalised                      |
+| `status`        | ApplicationStatus | `PENDING`, `APPROVED`, `REJECTED` |
+| `appliedAt`     | Long              | Unix epoch milliseconds           |
+| `message`       | String            | Optional cover message            |
 
 ### `User.kt` — Plain data class (no Room annotation)
-| Field | Type | Notes |
-|---|---|---|
-| `uid` | String | Firebase Auth UID |
-| `email` | String | |
-| `name` | String | Display name |
-| `role` | UserRole | `VOLUNTEER` or `NGO` |
-| `phoneNumber` | String | |
-| `bio` | String | |
-| `profileImageUrl` | String | |
-| `ngoName` | String | NGO-only, empty for volunteers |
-| `ngoDescription` | String | NGO-only |
+
+| Field             | Type     | Notes                          |
+| ----------------- | -------- | ------------------------------ |
+| `uid`             | String   | Firebase Auth UID              |
+| `email`           | String   |                                |
+| `name`            | String   | Display name                   |
+| `role`            | UserRole | `VOLUNTEER` or `NGO`           |
+| `phoneNumber`     | String   |                                |
+| `bio`             | String   |                                |
+| `profileImageUrl` | String   |                                |
+| `ngoName`         | String   | NGO-only, empty for volunteers |
+| `ngoDescription`  | String   | NGO-only                       |
 
 ### `WeatherResponse.kt` — Retrofit Gson model
+
 Maps to OpenWeatherMap API response. Fields: `cityName`, `main` (temp, feelsLike, humidity), `weather` (list of id/main/description/icon), `wind` (speed).
 
 ### `Quote.kt` — Retrofit Gson model
+
 Maps to Quotable API (`https://api.quotable.io/random`). Fields: `id` (`_id`), `content`, `author`, `tags`, `length`.
 
 ### `GeocodingResponse.kt` — Retrofit Gson model
+
 Maps to OpenWeatherMap Geocoding API. Fields: `name`, `lat`, `lon`, `country`, `state`.
 
 ### `NgoSearchResponse.kt` — Retrofit Gson model
+
 Maps to GlobalGiving API. Nested structure: `NgoSearchResponse → OrganizationWrapper → List<NgoOrganization>`. Each `NgoOrganization` has: id, name, mission, logoUrl, projectLink, `ThemeWrapper` (list of `NgoTheme`), `CountryWrapper` (list of `NgoCountry`).
 
 ---
@@ -367,18 +392,18 @@ Maps to GlobalGiving API. Nested structure: `NgoSearchResponse → OrganizationW
 
 All prototype data lives in this singleton object:
 
-| Property | Content |
-|---|---|
-| `VOLUNTEER_USER` | Alex Johnson, volunteer@test.com, role=VOLUNTEER |
-| `NGO_USER` | Green Earth Australia, ngo@test.com, role=NGO |
-| `DRIVES` | 5 drives across Melbourne: Yarra River Clean-Up (Environment, d1), Tutoring for Kids (Education, d2), Community Health Fair (Health, d3), Animal Shelter (Animal Welfare, d4), Community Garden (Community, d5) |
-| `APPLICATIONS` | 3 volunteer applications: a1=PENDING (d1), a2=APPROVED (d2), a3=REJECTED (d3) |
-| `QUOTE` | Gandhi quote on service |
-| `WEATHER` | Melbourne, 22°C, Clear Sky, 12 km/h wind |
-| `GEOCODING` | Federation Square, lat=-37.8179, lon=144.9691 |
-| `NGO_OWN_DRIVES` | Filtered from DRIVES where ngoId=="n1" (only d1: Yarra River Clean-Up) |
-| `NGO_RECEIVED_APPLICATIONS` | 4 applications for d1: na1=PENDING (Alex Johnson), na2=PENDING (Sarah Chen), na3=APPROVED (Marcus Williams), na4=REJECTED (Emma Rodriguez) |
-| `NGO_RESULTS` | 3 GlobalGiving org results: OzHarvest, Beyond Blue, Australian Red Cross |
+| Property                    | Content                                                                                                                                                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VOLUNTEER_USER`            | Alex Johnson, volunteer@test.com, role=VOLUNTEER                                                                                                                                                                |
+| `NGO_USER`                  | Green Earth Australia, ngo@test.com, role=NGO                                                                                                                                                                   |
+| `DRIVES`                    | 5 drives across Melbourne: Yarra River Clean-Up (Environment, d1), Tutoring for Kids (Education, d2), Community Health Fair (Health, d3), Animal Shelter (Animal Welfare, d4), Community Garden (Community, d5) |
+| `APPLICATIONS`              | 3 volunteer applications: a1=PENDING (d1), a2=APPROVED (d2), a3=REJECTED (d3)                                                                                                                                   |
+| `QUOTE`                     | Gandhi quote on service                                                                                                                                                                                         |
+| `WEATHER`                   | Melbourne, 22°C, Clear Sky, 12 km/h wind                                                                                                                                                                        |
+| `GEOCODING`                 | Federation Square, lat=-37.8179, lon=144.9691                                                                                                                                                                   |
+| `NGO_OWN_DRIVES`            | Filtered from DRIVES where ngoId=="n1" (only d1: Yarra River Clean-Up)                                                                                                                                          |
+| `NGO_RECEIVED_APPLICATIONS` | 4 applications for d1: na1=PENDING (Alex Johnson), na2=PENDING (Sarah Chen), na3=APPROVED (Marcus Williams), na4=REJECTED (Emma Rodriguez)                                                                      |
+| `NGO_RESULTS`               | 3 GlobalGiving org results: OzHarvest, Beyond Blue, Australian Red Cross                                                                                                                                        |
 
 ---
 
@@ -386,18 +411,18 @@ All prototype data lives in this singleton object:
 
 These files exist as placeholders (1 line / package declaration only). None have implementations yet.
 
-| File | Intended Purpose |
-|---|---|
+| File                  | Intended Purpose                                             |
+| --------------------- | ------------------------------------------------------------ |
 | `FirebaseServices.kt` | Firestore read/write helpers for drives, applications, users |
-| `AuthViewModel.kt` | Firebase Auth login, register, logout state |
-| `MainViewModel.kt` | Drive listing, application submission, search/filter logic |
-| `ApplicationDao.kt` | Room DAO — query/insert/update applications locally |
-| `DriveDao.kt` | Room DAO — query/insert/update drives locally |
-| `RetrofitClient.kt` | Singleton Retrofit instances for each API base URL |
-| `WeatherApi.kt` | OpenWeatherMap current weather endpoint |
-| `QuotableApi.kt` | Quotable random quote endpoint |
-| `GeocodingApi.kt` | OpenWeatherMap geocoding (address → lat/lon) |
-| `GlobalGivingApi.kt` | GlobalGiving NGO search endpoint |
+| `AuthViewModel.kt`    | Firebase Auth login, register, logout state                  |
+| `MainViewModel.kt`    | Drive listing, application submission, search/filter logic   |
+| `ApplicationDao.kt`   | Room DAO — query/insert/update applications locally          |
+| `DriveDao.kt`         | Room DAO — query/insert/update drives locally                |
+| `RetrofitClient.kt`   | Singleton Retrofit instances for each API base URL           |
+| `WeatherApi.kt`       | OpenWeatherMap current weather endpoint                      |
+| `QuotableApi.kt`      | Quotable random quote endpoint                               |
+| `GeocodingApi.kt`     | OpenWeatherMap geocoding (address → lat/lon)                 |
+| `GlobalGivingApi.kt`  | GlobalGiving NGO search endpoint                             |
 
 ---
 
@@ -420,6 +445,7 @@ These files exist as placeholders (1 line / package declaration only). None have
 ## What Is Complete vs. What Is A Stub
 
 ### COMPLETE (fully implemented, composes and renders)
+
 - `MainActivity.kt`
 - `AppNavigation.kt` (all routes, role-based nav bar switching)
 - All 5 Volunteer screens
@@ -429,6 +455,7 @@ These files exist as placeholders (1 line / package declaration only). None have
 - `DummyData.kt` (full static dataset)
 
 ### STUB (file exists, package declaration only, no implementation)
+
 - `FirebaseServices.kt`
 - `AuthViewModel.kt`
 - `MainViewModel.kt`
@@ -444,6 +471,7 @@ These files exist as placeholders (1 line / package declaration only). None have
 - `Type.kt`
 
 ### KNOWN TODOS IN COMPLETE FILES
+
 - `LoginScreen.kt`: "Forgot Password?" click has `// TODO: trigger Firebase password reset`
 - `LoginScreen.kt`: Login button uses hardcoded credential matching instead of `AuthViewModel`
 - `RegisterScreen.kt`: Register button navigates directly without any `AuthViewModel` call
@@ -468,9 +496,15 @@ These files exist as placeholders (1 line / package declaration only). None have
 
 ## Git Branches
 
-| Branch | Purpose |
-|---|---|
-| `main` | Current merged state (prototype complete) |
+| Branch              | Purpose                                           |
+| ------------------- | ------------------------------------------------- |
+| `main`              | Current merged state (prototype complete)         |
 | `prototype-version` | Feature branch where prototype was built (merged) |
 
 Recent commits: Volunteer side complete → NGO screens complete → Version change → Few file removal → Merge.
+
+<!-- keytool -list -v \
+ -keystore /Users/godspeed/Desktop/Monash/SEM-3/FIT5046-Mobile-App/Ass2/FIT5046-Assignment/my-release-key.keystore \
+ -alias my-key-alias \
+ -storepass 123456 \
+ -keypass 123456 -->
