@@ -1,10 +1,10 @@
-package com.example.assignment_fit5046.services
+package com.example.assignment_fit5046.services.remote.firebase
 
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
-import com.example.assignment_fit5046.services.FirebaseService.APPLICATIONS_COLLECTION
-import com.example.assignment_fit5046.services.FirebaseService.DRIVES_COLLECTION
-import com.example.assignment_fit5046.services.FirebaseService.firestore
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.APPLICATIONS_COLLECTION
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.DRIVES_COLLECTION
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.firestore
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions

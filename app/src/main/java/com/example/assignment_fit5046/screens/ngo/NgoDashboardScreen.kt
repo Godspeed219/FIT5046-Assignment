@@ -1,6 +1,7 @@
 package com.example.assignment_fit5046.screens.ngo
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,14 +16,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,21 +38,50 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
-import com.example.assignment_fit5046.datamodels.DummyData
+import com.example.assignment_fit5046.datamodels.ApplicationStatus
+import com.example.assignment_fit5046.services.viewmodel.AuthState
+import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.services.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NgoDashboardScreen(navController: NavController) {
-    val ownDrives = DummyData.NGO_OWN_DRIVES
-    val totalApplications = DummyData.NGO_RECEIVED_APPLICATIONS.size
-    val pendingCount = DummyData.NGO_RECEIVED_APPLICATIONS.count {
-        it.status == com.example.assignment_fit5046.datamodels.ApplicationStatus.PENDING
+fun NgoDashboardScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel,
+    mainViewModel: MainViewModel
+) {
+    val authState by authViewModel.authState.collectAsState()
+    val currentUser = (authState as? AuthState.LoggedIn)?.user
+
+    val ngoDrives by mainViewModel.ngoDrives.collectAsState()
+    val ngoApplications by mainViewModel.ngoApplications.collectAsState()
+    val isLoading by mainViewModel.isLoading.collectAsState()
+    val errorMessage by mainViewModel.errorMessage.collectAsState()
+    val successMessage by mainViewModel.successMessage.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(currentUser?.uid) {
+        currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) }
     }
+
+    LaunchedEffect(errorMessage, successMessage) {
+        val msg = errorMessage ?: successMessage
+        if (msg != null) {
+            snackbarHostState.showSnackbar(msg)
+            mainViewModel.clearMessages()
+        }
+    }
+
+    val totalDrives = ngoDrives.size
+    val totalApplicants = ngoApplications.size
+    val pendingCount = ngoApplications.count { it.status == ApplicationStatus.PENDING }
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("VolunteerLink") })
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -59,7 +96,7 @@ fun NgoDashboardScreen(navController: NavController) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = DummyData.NGO_USER.ngoName,
+                        text = currentUser?.ngoName ?: currentUser?.name ?: "",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -76,13 +113,13 @@ fun NgoDashboardScreen(navController: NavController) {
                     StatCard(
                         modifier = Modifier.weight(1f),
                         icon = { Icon(Icons.Default.Campaign, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
-                        value = "${ownDrives.size}",
+                        value = "$totalDrives",
                         label = "Drives"
                     )
                     StatCard(
                         modifier = Modifier.weight(1f),
                         icon = { Icon(Icons.Default.People, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
-                        value = "$totalApplications",
+                        value = "$totalApplicants",
                         label = "Applicants"
                     )
                     StatCard(
@@ -96,6 +133,14 @@ fun NgoDashboardScreen(navController: NavController) {
 
             item { Spacer(modifier = Modifier.height(8.dp)) }
 
+            if (isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }
+                }
+            }
+
             item {
                 Text(
                     text = "Your Active Drives",
@@ -105,8 +150,8 @@ fun NgoDashboardScreen(navController: NavController) {
                 )
             }
 
-            items(ownDrives) { drive ->
-                val appCount = DummyData.NGO_RECEIVED_APPLICATIONS.count { it.driveId == drive.driveId }
+            items(ngoDrives, key = { it.driveId }) { drive ->
+                val appCount = ngoApplications.count { it.driveId == drive.driveId }
                 DriveManageCard(
                     drive = drive,
                     applicationCount = appCount,
@@ -114,6 +159,23 @@ fun NgoDashboardScreen(navController: NavController) {
                         navController.navigate("${Screen.NgoApplications.route}/${drive.driveId}")
                     }
                 )
+            }
+
+            if (!isLoading && ngoDrives.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "No drives yet. Create your first drive!",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }

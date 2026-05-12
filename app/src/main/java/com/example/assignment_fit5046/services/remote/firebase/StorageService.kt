@@ -1,7 +1,7 @@
-package com.example.assignment_fit5046.services
+package com.example.assignment_fit5046.services.remote.firebase
 
 import android.net.Uri
-import com.example.assignment_fit5046.services.FirebaseService.storage
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.storage
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 

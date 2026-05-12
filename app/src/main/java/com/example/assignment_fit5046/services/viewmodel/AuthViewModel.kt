@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.assignment_fit5046.datamodels.User
-import com.example.assignment_fit5046.services.FirebaseService
-import com.example.assignment_fit5046.services.UserService
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService
+import com.example.assignment_fit5046.services.remote.firebase.UserService
 import com.example.assignment_fit5046.services.local.AppDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

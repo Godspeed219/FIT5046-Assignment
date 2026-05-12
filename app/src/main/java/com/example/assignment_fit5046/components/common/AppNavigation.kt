@@ -32,6 +32,8 @@ import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.SearchScreen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -54,6 +56,7 @@ fun AppNavigation(
     onRoleChanged: (UserRole) -> Unit = {}
 ) {
     val navController = rememberNavController()
+    val mainViewModel: MainViewModel = viewModel()
     val authState by authViewModel.authState.collectAsState()
     var currentRole by remember { mutableStateOf<UserRole?>(null) }
 
@@ -121,7 +124,11 @@ fun AppNavigation(
                 ProfileScreen(navController = navController, onSignOut = onSignOut)
             }
             composable(Screen.NgoDashboard.route) {
-                NgoDashboardScreen(navController = navController)
+                NgoDashboardScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.CreateDrive.route) {
                 CreateDriveScreen(navController = navController)

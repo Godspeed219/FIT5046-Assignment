@@ -1,12 +1,11 @@
-package com.example.assignment_fit5046.services
+package com.example.assignment_fit5046.services.remote.firebase
 
-import android.util.Log
 import com.example.assignment_fit5046.datamodels.User
 import com.example.assignment_fit5046.datamodels.UserRole
-import com.example.assignment_fit5046.services.FirebaseService.USERS_COLLECTION
-import com.example.assignment_fit5046.services.FirebaseService.auth
-import com.example.assignment_fit5046.services.FirebaseService.currentUserId
-import com.example.assignment_fit5046.services.FirebaseService.firestore
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.USERS_COLLECTION
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.auth
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.currentUserId
+import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.firestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
