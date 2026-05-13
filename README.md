@@ -39,9 +39,10 @@ com.example.assignment_fit5046
 ```
 FIT5046-Assignment/
 ├── app/
-│   ├── build.gradle.kts                  # App-level build config (all dependencies)
+│   ├── build.gradle.kts                          # App-level build config (all dependencies)
+│   ├── google-services.json                      # Firebase project config
 │   └── src/main/
-│       ├── AndroidManifest.xml           # Single activity, launcher intent
+│       ├── AndroidManifest.xml                   # Single activity, launcher intent
 │       ├── java/com/example/assignment_fit5046/
 │       │   ├── MainActivity.kt
 │       │   ├── components/
@@ -68,40 +69,65 @@ FIT5046-Assignment/
 │       │   │   ├── common/
 │       │   │   │   ├── LoginScreen.kt
 │       │   │   │   └── RegisterScreen.kt
+│       │   │   ├── company/
+│       │   │   │   ├── AboutUsScreen.kt
+│       │   │   │   ├── ContactUsScreen.kt
+│       │   │   │   └── TermsConditionsScreen.kt
 │       │   │   ├── volunteer/
-│       │   │   │   ├── HomeScreen.kt
-│       │   │   │   ├── SearchScreen.kt
 │       │   │   │   ├── DriveDetailScreen.kt
+│       │   │   │   ├── EditVolunteerProfileScreen.kt
+│       │   │   │   ├── HomeScreen.kt
 │       │   │   │   ├── MyApplicationsScreen.kt
-│       │   │   │   └── ProfileScreen.kt
+│       │   │   │   ├── ProfileScreen.kt
+│       │   │   │   └── SearchScreen.kt
 │       │   │   └── ngo/
-│       │   │       ├── NgoDashboardScreen.kt
 │       │   │       ├── CreateDriveScreen.kt
-│       │   │       ├── ManageDrivesScreen.kt
 │       │   │       ├── DriveApplicationsScreen.kt
+│       │   │       ├── DriveConfirmationScreen.kt
+│       │   │       ├── EditDriveScreen.kt
+│       │   │       ├── EditNgoProfileScreen.kt
+│       │   │       ├── ManageDrivesScreen.kt
+│       │   │       ├── NgoDashboardScreen.kt
 │       │   │       └── NgoProfileScreen.kt
 │       │   ├── services/
-│       │   │   ├── FirebaseServices.kt          # STUB (empty)
-│       │   │   ├── local/dao/
-│       │   │   │   ├── ApplicationDao.kt        # STUB (empty)
-│       │   │   │   └── DriveDao.kt              # STUB (empty)
+│       │   │   ├── local/
+│       │   │   │   ├── AppDatabase.kt
+│       │   │   │   ├── TypeConverters.kt
+│       │   │   │   └── dao/
+│       │   │   │       ├── ApplicationDao.kt
+│       │   │   │       ├── DriveDao.kt
+│       │   │   │       └── UserDao.kt
 │       │   │   ├── remote/
-│       │   │   │   ├── RetrofitClient.kt        # STUB (empty)
-│       │   │   │   └── api/
-│       │   │   │       ├── WeatherApi.kt        # STUB (empty)
-│       │   │   │       ├── QuotableApi.kt       # STUB (empty)
-│       │   │   │       ├── GeocodingApi.kt      # STUB (empty)
-│       │   │   │       └── GlobalGivingApi.kt   # STUB (empty)
+│       │   │   │   ├── RetrofitClient.kt
+│       │   │   │   ├── api/
+│       │   │   │   │   ├── GeocodingApi.kt
+│       │   │   │   │   ├── GlobalGivingApi.kt
+│       │   │   │   │   ├── QuotableApi.kt
+│       │   │   │   │   └── WeatherApi.kt
+│       │   │   │   └── firebase/
+│       │   │   │       ├── ApplicationService.kt
+│       │   │   │       ├── DriveService.kt
+│       │   │   │       ├── FirebaseService.kt
+│       │   │   │       ├── StorageService.kt
+│       │   │   │       └── UserService.kt
 │       │   │   └── viewmodel/
-│       │   │       ├── AuthViewModel.kt         # STUB (empty)
-│       │   │       └── MainViewModel.kt         # STUB (empty)
+│       │   │       ├── AuthViewModel.kt
+│       │   │       └── MainViewModel.kt
 │       │   └── ui/
-│       │       ├── Color.kt                     # STUB (empty)
-│       │       ├── Theme.kt                     # STUB (empty)
-│       │       └── Type.kt                      # STUB (empty)
+│       │       ├── Color.kt
+│       │       ├── Theme.kt
+│       │       └── Type.kt
 │       └── res/
-│           ├── drawable/                        # ic_launcher_background/foreground
-│           ├── mipmap-*/                        # App icon (all densities)
+│           ├── drawable/
+│           │   ├── ic_empty_drives.xml
+│           │   ├── ic_launcher_background.xml
+│           │   └── ic_launcher_foreground.xml
+│           ├── font/
+│           │   ├── opensans_bold.ttf
+│           │   ├── opensans_medium.ttf
+│           │   ├── opensans_regular.ttf
+│           │   └── opensans_semibold.ttf
+│           ├── mipmap-*/                          # App icon (all densities)
 │           ├── values/
 │           │   ├── colors.xml
 │           │   ├── strings.xml
@@ -109,15 +135,21 @@ FIT5046-Assignment/
 │           └── xml/
 │               ├── backup_rules.xml
 │               └── data_extraction_rules.xml
-├── build.gradle.kts                             # Root build config
-├── settings.gradle.kts                          # Module registration
-├── gradle.properties                            # JVM args, AndroidX flag
-├── gradlew / gradlew.bat                        # Gradle wrapper scripts
-├── gradle/libs.versions.toml                    # Version catalog
-├── firebase.json                                # Firebase hosting/emulator config
-├── firestore.rules                              # Firestore security rules
-├── firestore.indexes.json                       # Firestore composite indexes (empty)
-└── .firebaserc                                  # Firebase project alias
+├── build.gradle.kts                              # Root build config
+├── settings.gradle.kts                           # Module registration
+├── gradle.properties                             # JVM args, AndroidX flag
+├── gradlew / gradlew.bat                         # Gradle wrapper scripts
+├── gradle/
+│   ├── libs.versions.toml                        # Version catalog
+│   ├── gradle-daemon-jvm.properties
+│   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── my-release-key.keystore                       # Release signing key
+├── firebase.json                                 # Firebase hosting/emulator config
+├── firestore.rules                               # Firestore security rules
+├── firestore.indexes.json                        # Firestore composite indexes
+└── .firebaserc                                   # Firebase project alias
 ```
 
 ---
