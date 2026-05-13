@@ -137,6 +137,7 @@ private fun ApplicantCard(
         ApplicationStatus.APPROVED -> "Approved" to StatusApproved
         ApplicationStatus.PENDING -> "Pending" to StatusPending
         ApplicationStatus.REJECTED -> "Rejected" to StatusRejected
+        else -> { return; }
     }
 
     ElevatedCard(

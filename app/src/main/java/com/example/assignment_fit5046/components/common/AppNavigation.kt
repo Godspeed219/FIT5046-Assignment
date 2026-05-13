@@ -33,6 +33,7 @@ import com.example.assignment_fit5046.screens.ngo.ManageDrivesScreen
 import com.example.assignment_fit5046.screens.ngo.NgoDashboardScreen
 import com.example.assignment_fit5046.screens.ngo.NgoProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.DriveDetailScreen
+import com.example.assignment_fit5046.screens.volunteer.EditVolunteerProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.HomeScreen
 import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
 import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
@@ -57,6 +58,7 @@ sealed class Screen(val route: String) {
     object DriveConfirmation : Screen("drive_confirmation")
     object EditDrive : Screen("edit_drive")
     object EditNgoProfile : Screen("edit_ngo_profile")
+    object EditVolunteerProfile : Screen("edit_volunteer_profile")
     object AboutUs : Screen("about_us")
     object ContactUs : Screen("contact_us")
     object TermsConditions : Screen("terms_conditions")
@@ -146,7 +148,14 @@ fun AppNavigation(
                 )
             }
             composable(Screen.VolunteerProfile.route) {
-                ProfileScreen(navController = navController, onSignOut = onSignOut)
+                ProfileScreen(navController = navController, authViewModel = authViewModel)
+            }
+            composable(Screen.EditVolunteerProfile.route) {
+                EditVolunteerProfileScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.NgoDashboard.route) {
                 NgoDashboardScreen(

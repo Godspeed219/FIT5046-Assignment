@@ -206,7 +206,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (secureUrl == null) _errorMessage.value = "Failed to upload image"
                 onResult(secureUrl)
             } catch (e: Exception) {
-                _errorMessage.value = e.message
+                _errorMessage.value = e.message; Log.e(
+                    "FAILURE QUERY",
+                    _errorMessage.value.toString(),
+                )
                 onResult(null)
             } finally {
                 _isLoading.value = false
@@ -253,7 +256,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         applicationDao.insertApplications(apps)
                         _volunteerApplications.value = apps
                     }
-                    .onFailure { _errorMessage.value = it.message }
+                    .onFailure { _errorMessage.value = it.message; Log.e(
+                        "FAILURE QUERY",
+                        _errorMessage.value.toString(),
+                    ) }
 
                 _quote.value = Quote(
                     id = "static",
@@ -277,14 +283,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         driveDao.insertDrives(drives)
                         _allActiveDrives.value = drives
                     }
-                    .onFailure { _errorMessage.value = it.message ?: "Failed to load drives" }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to load drives"; Log.e(
+                        "FAILURE QUERY",
+                        _errorMessage.value.toString(),
+                    ) }
 
                 ApplicationService.getApplicationsByVolunteer(volunteerId)
                     .onSuccess { apps ->
                         applicationDao.insertApplications(apps)
                         _volunteerApplications.value = apps
                     }
-                    .onFailure { _errorMessage.value = it.message }
+                    .onFailure { _errorMessage.value = it.message; Log.e(
+                        "FAILURE QUERY",
+                        _errorMessage.value.toString(),
+                    ) }
             } finally {
                 _isLoading.value = false
             }
@@ -301,7 +313,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _updatedUser.value = user
                         _successMessage.value = "Profile updated successfully"
                     }
-                    .onFailure { _errorMessage.value = it.message ?: "Failed to update profile" }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to update profile"; Log.e(
+                        "FAILURE QUERY",
+                        _errorMessage.value.toString(),
+                    ) }
             } finally {
                 _isLoading.value = false
             }
@@ -326,7 +341,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     _successMessage.value = "Application withdrawn"
                 }
-                .onFailure { _errorMessage.value = it.message }
+                .onFailure { _errorMessage.value = it.message; Log.e(
+                    "FAILURE QUERY",
+                    _errorMessage.value.toString(),
+                ) }
         }
     }
 
@@ -343,7 +361,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ApplicationService.applyToDrive(driveId, driveTitle, volunteerId, volunteerName, message)
                     .onSuccess { application ->
                         applicationDao.insertApplication(application)
-                        _volunteerApplications.value = _volunteerApplications.value + application
+                        _volunteerApplications.value += application
                         _successMessage.value = "Application submitted successfully"
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to apply" }
