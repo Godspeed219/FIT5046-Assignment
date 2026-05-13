@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,9 +21,14 @@ import com.example.assignment_fit5046.components.volunteer.VolunteerNavBar
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.screens.common.LoginScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
+import com.example.assignment_fit5046.screens.company.AboutUsScreen
+import com.example.assignment_fit5046.screens.company.ContactUsScreen
+import com.example.assignment_fit5046.screens.company.TermsConditionsScreen
 import com.example.assignment_fit5046.screens.ngo.CreateDriveScreen
 import com.example.assignment_fit5046.screens.ngo.DriveApplicationsScreen
 import com.example.assignment_fit5046.screens.ngo.DriveConfirmationScreen
+import com.example.assignment_fit5046.screens.ngo.EditDriveScreen
+import com.example.assignment_fit5046.screens.ngo.EditNgoProfileScreen
 import com.example.assignment_fit5046.screens.ngo.ManageDrivesScreen
 import com.example.assignment_fit5046.screens.ngo.NgoDashboardScreen
 import com.example.assignment_fit5046.screens.ngo.NgoProfileScreen
@@ -34,7 +40,6 @@ import com.example.assignment_fit5046.screens.volunteer.SearchScreen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -50,6 +55,11 @@ sealed class Screen(val route: String) {
     object NgoProfile : Screen("ngo_profile")
     object NgoApplications : Screen("ngo_applications")
     object DriveConfirmation : Screen("drive_confirmation")
+    object EditDrive : Screen("edit_drive")
+    object EditNgoProfile : Screen("edit_ngo_profile")
+    object AboutUs : Screen("about_us")
+    object ContactUs : Screen("contact_us")
+    object TermsConditions : Screen("terms_conditions")
 }
 
 @Composable
@@ -143,10 +153,17 @@ fun AppNavigation(
                 DriveConfirmationScreen(navController = navController)
             }
             composable(Screen.ManageDrives.route) {
-                ManageDrivesScreen(navController = navController)
+                ManageDrivesScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.NgoProfile.route) {
-                NgoProfileScreen(navController = navController, onSignOut = onSignOut)
+                NgoProfileScreen(
+                    navController = navController,
+                    authViewModel = authViewModel
+                )
             }
             composable(
                 route = "${Screen.NgoApplications.route}/{driveId}",
@@ -154,6 +171,32 @@ fun AppNavigation(
             ) { backStackEntry ->
                 val driveId = backStackEntry.arguments?.getString("driveId") ?: ""
                 DriveApplicationsScreen(navController = navController, driveId = driveId)
+            }
+            composable(
+                route = "${Screen.EditDrive.route}/{driveId}",
+                arguments = listOf(navArgument("driveId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                EditDriveScreen(
+                    driveId = backStackEntry.arguments?.getString("driveId") ?: "",
+                    navController = navController,
+                    mainViewModel = mainViewModel
+                )
+            }
+            composable(Screen.EditNgoProfile.route) {
+                EditNgoProfileScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
+            }
+            composable(Screen.AboutUs.route) {
+                AboutUsScreen(navController = navController)
+            }
+            composable(Screen.ContactUs.route) {
+                ContactUsScreen(navController = navController)
+            }
+            composable(Screen.TermsConditions.route) {
+                TermsConditionsScreen(navController = navController)
             }
         }
     }

@@ -1,8 +1,7 @@
 package com.example.assignment_fit5046.components.ngo
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -22,8 +21,7 @@ fun NgoNavBar(navController: NavController) {
 
     val items = listOf(
         Triple("Dashboard", Screen.NgoDashboard.route, Icons.Default.Home),
-        Triple("Create", Screen.CreateDrive.route, Icons.Default.Add),
-        Triple("Manage", Screen.ManageDrives.route, Icons.Default.Edit),
+        Triple("Drives", Screen.ManageDrives.route, Icons.Default.Folder),
         Triple("Profile", Screen.NgoProfile.route, Icons.Default.Person)
     )
 

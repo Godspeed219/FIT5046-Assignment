@@ -1,5 +1,6 @@
 package com.example.assignment_fit5046.screens.ngo
 
+import android.R.attr.text
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,11 +35,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
+import com.example.assignment_fit5046.datamodels.DriveStatus
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -78,9 +81,6 @@ fun NgoDashboardScreen(
     val pendingCount = ngoApplications.count { it.status == ApplicationStatus.PENDING }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("VolunteerLink") })
-        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         LazyColumn(
@@ -92,8 +92,8 @@ fun NgoDashboardScreen(
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                     Text(
                         text = "Welcome back,",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         text = currentUser?.ngoName ?: currentUser?.name ?: "",
@@ -157,6 +157,13 @@ fun NgoDashboardScreen(
                     applicationCount = appCount,
                     onViewApplications = {
                         navController.navigate("${Screen.NgoApplications.route}/${drive.driveId}")
+                    },
+                    onEdit = {
+                        navController.navigate("${Screen.EditDrive.route}/${drive.driveId}")
+                    },
+                    onToggleStatus = {
+                        val newStatus = if (drive.status == DriveStatus.ACTIVE) DriveStatus.CLOSED else DriveStatus.ACTIVE
+                        mainViewModel.updateDriveStatus(drive.driveId, newStatus)
                     }
                 )
             }

@@ -10,9 +10,11 @@ import com.example.assignment_fit5046.datamodels.Application as VolunteerApplica
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.User
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
+import com.example.assignment_fit5046.services.remote.firebase.UserService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +31,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val driveDao = AppDatabase.getInstance(application).driveDao()
     private val applicationDao = AppDatabase.getInstance(application).applicationDao()
+    private val userDao = AppDatabase.getInstance(application).userDao()
 
     private val _ngoDrives = MutableStateFlow<List<Drive>>(emptyList())
     val ngoDrives: StateFlow<List<Drive>> = _ngoDrives.asStateFlow()
@@ -44,6 +47,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
+
+    private val _updatedUser = MutableStateFlow<User?>(null)
+    val updatedUser: StateFlow<User?> = _updatedUser.asStateFlow()
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -65,14 +71,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     applicationDao.insertApplications(apps)
                                     allApplications.addAll(apps)
                                 }
-                                .onFailure { _errorMessage.value = it.message }
+                                .onFailure { _errorMessage.value = it.message; Log.e(
+                                    "FAILURE QUERY",
+                                    _errorMessage.value.toString(),
+                                ) }
                         }
                         _ngoApplications.value = allApplications
                     }
                     .onFailure { _errorMessage.value = it.message; Log.e(
                         "FAILURE QUERY",
                         _errorMessage.value.toString(),
-
                     ) }
             } finally {
                 _isLoading.value = false
@@ -186,6 +194,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 _errorMessage.value = e.message
                 onResult(null)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateDrive(drive: Drive) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                DriveService.updateDrive(drive)
+                    .onSuccess {
+                        _ngoDrives.value = _ngoDrives.value.map { d ->
+                            if (d.driveId == drive.driveId) drive else d
+                        }
+                        driveDao.insertDrive(drive)
+                        _successMessage.value = "Drive updated successfully"
+                    }
+                    .onFailure { _errorMessage.value = it.message }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun saveUserProfile(user: User) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                UserService.updateUser(user)
+                    .onSuccess {
+                        userDao.insertUser(user)
+                        _updatedUser.value = user
+                        _successMessage.value = "Profile updated successfully"
+                    }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to update profile" }
             } finally {
                 _isLoading.value = false
             }

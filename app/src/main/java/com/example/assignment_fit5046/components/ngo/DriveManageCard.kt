@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ElevatedCard
@@ -26,17 +29,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import com.example.assignment_fit5046.ui.StatusApproved
-import com.example.assignment_fit5046.ui.TextSecondary
 import androidx.compose.ui.unit.dp
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.ui.StatusApproved
+import com.example.assignment_fit5046.ui.TextDisabled
 
 @Composable
 fun DriveManageCard(
     drive: Drive,
     applicationCount: Int,
-    onViewApplications: () -> Unit
+    onViewApplications: () -> Unit,
+    onEdit: () -> Unit,
+    onToggleStatus: () -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier
@@ -58,18 +63,39 @@ fun DriveManageCard(
                         .weight(1f)
                         .padding(end = 8.dp)
                 )
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            text = drive.category,
-                            style = MaterialTheme.typography.labelSmall
+                Column(horizontalAlignment = Alignment.End) {
+                    SuggestionChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = drive.category,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        colors = SuggestionChipDefaults.suggestionChipColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
                         )
-                    },
-                    colors = SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
                     )
-                )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val (statusLabel, statusColor) = when (drive.status) {
+                        DriveStatus.ACTIVE -> "Current" to StatusApproved
+                        DriveStatus.CLOSED -> "Expired" to TextDisabled
+                    }
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(statusLabel, style = MaterialTheme.typography.labelSmall)
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = statusColor.copy(alpha = 0.15f),
+                            labelColor = statusColor
+                        ),
+                        border = AssistChipDefaults.assistChipBorder(
+                            borderColor = statusColor.copy(alpha = 0.4f),
+                            enabled = true
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -100,54 +126,74 @@ fun DriveManageCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.People,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "$applicationCount applications",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                val (statusLabel, statusColor) = when (drive.status) {
-                    DriveStatus.ACTIVE -> "Active" to StatusApproved
-                    DriveStatus.CLOSED -> "Closed" to TextSecondary
-                }
-                AssistChip(
-                    onClick = {},
-                    label = {
-                        Text(statusLabel, style = MaterialTheme.typography.labelMedium)
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = statusColor.copy(alpha = 0.15f),
-                        labelColor = statusColor
-                    ),
-                    border = AssistChipDefaults.assistChipBorder(
-                        borderColor = statusColor.copy(alpha = 0.4f),
-                        enabled = true
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.People,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "$applicationCount applications",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            OutlinedButton(
-                onClick = onViewApplications,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("View Applications ($applicationCount)")
+                OutlinedButton(
+                    onClick = onViewApplications,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.People,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Applicants ($applicationCount)")
+                }
+                OutlinedButton(
+                    onClick = onEdit,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Edit")
+                }
+                OutlinedButton(
+                    onClick = onToggleStatus,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (drive.status == DriveStatus.ACTIVE) {
+                        Icon(
+                            Icons.Default.Archive,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Close")
+                    } else {
+                        Icon(
+                            Icons.Default.Unarchive,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Reopen")
+                    }
+                }
             }
         }
     }
