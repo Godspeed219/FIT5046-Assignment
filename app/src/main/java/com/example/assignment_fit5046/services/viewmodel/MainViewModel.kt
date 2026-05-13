@@ -10,6 +10,7 @@ import com.example.assignment_fit5046.datamodels.Application as VolunteerApplica
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.Quote
 import com.example.assignment_fit5046.datamodels.User
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
@@ -50,6 +51,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _updatedUser = MutableStateFlow<User?>(null)
     val updatedUser: StateFlow<User?> = _updatedUser.asStateFlow()
+
+    private val _allActiveDrives = MutableStateFlow<List<Drive>>(emptyList())
+    val allActiveDrives: StateFlow<List<Drive>> = _allActiveDrives.asStateFlow()
+
+    private val _quote = MutableStateFlow<Quote?>(null)
+    val quote: StateFlow<Quote?> = _quote.asStateFlow()
+
+    private val _volunteerApplications = MutableStateFlow<List<VolunteerApplication>>(emptyList())
+    val volunteerApplications: StateFlow<List<VolunteerApplication>> = _volunteerApplications.asStateFlow()
+
+    private val _searchResults = MutableStateFlow<List<Drive>>(emptyList())
+    val searchResults: StateFlow<List<Drive>> = _searchResults.asStateFlow()
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -143,7 +156,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         ApplicationStatus.APPROVED -> "Applicant approved"
                         ApplicationStatus.REJECTED -> "Applicant rejected"
                         ApplicationStatus.PENDING -> "Application set to pending"
-                    }
+                        else -> {""}
+                    } as String?
                 }
                 .onFailure { _errorMessage.value = it.message }
         }
@@ -219,6 +233,64 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun loadVolunteerHome(volunteerId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val cached = driveDao.getAllDrives().filter { it.status == DriveStatus.ACTIVE }
+                _allActiveDrives.value = cached
+
+                DriveService.getAllActiveDrives()
+                    .onSuccess { drives ->
+                        driveDao.insertDrives(drives)
+                        _allActiveDrives.value = drives
+                        _searchResults.value = drives
+                    }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to load drives"; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
+
+                ApplicationService.getApplicationsByVolunteer(volunteerId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        _volunteerApplications.value = apps
+                    }
+                    .onFailure { _errorMessage.value = it.message }
+
+                _quote.value = Quote(
+                    id = "static",
+                    content = "The best way to find yourself is to lose yourself in the service of others.",
+                    author = "Mahatma Gandhi",
+                    tags = emptyList(),
+                    length = 86
+                )
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun refreshVolunteerHome(volunteerId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                DriveService.getAllActiveDrives()
+                    .onSuccess { drives ->
+                        driveDao.insertDrives(drives)
+                        _allActiveDrives.value = drives
+                    }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to load drives" }
+
+                ApplicationService.getApplicationsByVolunteer(volunteerId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        _volunteerApplications.value = apps
+                    }
+                    .onFailure { _errorMessage.value = it.message }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun saveUserProfile(user: User) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -230,6 +302,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _successMessage.value = "Profile updated successfully"
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to update profile" }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun searchDrives(query: String, category: String) {
+        val base = _allActiveDrives.value
+        _searchResults.value = base.filter { drive ->
+            (category == "All" || drive.category == category) &&
+                (query.isEmpty() || drive.title.contains(query, ignoreCase = true) ||
+                    drive.description.contains(query, ignoreCase = true))
+        }
+    }
+
+    fun withdrawApplication(applicationId: String, driveId: String) {
+        viewModelScope.launch {
+            ApplicationService.updateApplicationStatus(applicationId, ApplicationStatus.WITHDRAWN)
+                .onSuccess {
+                    _volunteerApplications.value = _volunteerApplications.value.map { app ->
+                        if (app.applicationId == applicationId) app.copy(status = ApplicationStatus.WITHDRAWN) else app
+                    }
+                    _successMessage.value = "Application withdrawn"
+                }
+                .onFailure { _errorMessage.value = it.message }
+        }
+    }
+
+    fun applyToDrive(
+        driveId: String,
+        driveTitle: String,
+        volunteerId: String,
+        volunteerName: String,
+        message: String
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                ApplicationService.applyToDrive(driveId, driveTitle, volunteerId, volunteerName, message)
+                    .onSuccess { application ->
+                        applicationDao.insertApplication(application)
+                        _volunteerApplications.value = _volunteerApplications.value + application
+                        _successMessage.value = "Application submitted successfully"
+                    }
+                    .onFailure { _errorMessage.value = it.message ?: "Failed to apply" }
             } finally {
                 _isLoading.value = false
             }

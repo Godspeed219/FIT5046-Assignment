@@ -16,5 +16,5 @@ data class Application(
 )
 
 enum class ApplicationStatus {
-    PENDING, APPROVED, REJECTED
+    PENDING, APPROVED, REJECTED, WITHDRAWN
 }

@@ -117,20 +117,33 @@ fun AppNavigation(
                 RegisterScreen(navController = navController, authViewModel = authViewModel)
             }
             composable(Screen.VolunteerHome.route) {
-                HomeScreen(navController = navController)
+                HomeScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(
                 route = "${Screen.DriveDetail.route}/{driveId}",
                 arguments = listOf(navArgument("driveId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val driveId = backStackEntry.arguments?.getString("driveId") ?: ""
-                DriveDetailScreen(navController = navController, driveId = driveId)
+                DriveDetailScreen(
+                    navController = navController,
+                    driveId = driveId,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.Search.route) {
-                SearchScreen(navController = navController)
+                SearchScreen(navController = navController, mainViewModel = mainViewModel)
             }
             composable(Screen.MyApplications.route) {
-                MyApplicationsScreen(navController = navController)
+                MyApplicationsScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.VolunteerProfile.route) {
                 ProfileScreen(navController = navController, onSignOut = onSignOut)
