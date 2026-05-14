@@ -162,7 +162,7 @@ fun ManageDrivesScreen(
 
                 PullToRefreshBox(
                     isRefreshing = isRefreshing,
-                    onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDashboard(it) } },
+                    onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDrives(it) } },
                     state = pullRefreshState,
                     modifier = Modifier.weight(1f).padding(vertical = 18.dp)
                 ) {

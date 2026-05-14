@@ -17,7 +17,6 @@ import com.example.assignment_fit5046.services.remote.firebase.ApplicationServic
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,6 +72,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _profileUpdateSuccess = MutableStateFlow(false)
+    val profileUpdateSuccess: StateFlow<Boolean> = _profileUpdateSuccess.asStateFlow()
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -412,8 +414,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             _updatedUser.value = fresh
                             _currentUser.value = fresh
                         }
-                        delay(2000)
                         _successMessage.value = "Profile updated successfully"
+                        _profileUpdateSuccess.value = true
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to update profile"; Log.e(
                         "FAILURE QUERY",
@@ -490,8 +492,98 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun refreshDrives(query: String = "", category: String = "All") {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                DriveService.getAllActiveDrives()
+                    .onSuccess { drives ->
+                        driveDao.insertDrives(drives)
+                        _allActiveDrives.value = drives
+                        _searchResults.value = drives.filter { drive ->
+                            (category == "All" || drive.category == category) &&
+                                    (query.isEmpty() || drive.title.contains(query, ignoreCase = true) ||
+                                            drive.description.contains(query, ignoreCase = true))
+                        }
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", it.message.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshMyApplications(volunteerId: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                ApplicationService.getApplicationsByVolunteer(volunteerId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        _volunteerApplications.value = apps
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", it.message.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshCurrentUser(uid: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                UserService.getCurrentUser()
+                    .onSuccess { user ->
+                        userDao.insertUser(user)
+                        _currentUser.value = user
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", it.message.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshNgoDrives(ngoId: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                DriveService.getDrivesByNgo(ngoId)
+                    .onSuccess { drives ->
+                        driveDao.insertDrives(drives)
+                        _ngoDrives.value = drives.filter { it.ngoId == ngoId }
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", it.message.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshApplicationsForDrive(driveId: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                ApplicationService.getApplicationsByDrive(driveId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        val updated = _ngoApplications.value.filter { it.driveId != driveId } + apps
+                        _ngoApplications.value = updated
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", it.message.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
     fun clearMessages() {
         _errorMessage.value = null
         _successMessage.value = null
+    }
+
+    fun clearProfileUpdateSuccess() {
+        _profileUpdateSuccess.value = false
     }
 }

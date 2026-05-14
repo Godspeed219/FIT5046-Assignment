@@ -1,6 +1,7 @@
 package com.example.assignment_fit5046.components.volunteer
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.assignment_fit5046.datamodels.Quote
@@ -23,31 +25,39 @@ fun QuoteCard(quote: Quote) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "\u201C",
-                fontSize = 52.sp,
-                lineHeight = 40.sp,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Text(
-                text = quote.content,
-                style = MaterialTheme.typography.bodyLarge.copy(fontStyle = FontStyle.Italic),
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = "— ${quote.author}",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "“",
+                fontSize = 36.sp,
+                lineHeight = 36.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.align(Alignment.End)
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 10.dp)
             )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = quote.content,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontStyle = FontStyle.Italic, fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "- ${quote.author}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

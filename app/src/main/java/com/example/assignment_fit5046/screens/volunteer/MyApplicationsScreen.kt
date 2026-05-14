@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
@@ -73,11 +75,13 @@ fun MyApplicationsScreen(
     val currentUser = (authState as? AuthState.LoggedIn)?.user
 
     val volunteerApplications by mainViewModel.volunteerApplications.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var pendingWithdraw by remember { mutableStateOf<Application?>(null) }
+    val pullRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
@@ -117,37 +121,44 @@ fun MyApplicationsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (volunteerApplications.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Assignment,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            "No applications yet",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { currentUser?.uid?.let { mainViewModel.refreshMyApplications(it) } },
+                state = pullRefreshState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (volunteerApplications.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.Assignment,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "No applications yet",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(volunteerApplications, key = { it.applicationId }) { application ->
-                        ApplicationCard(
-                            application = application,
-                            onWithdraw = { pendingWithdraw = application }
-                        )
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(volunteerApplications, key = { it.applicationId }) { application ->
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                        }
+                        item { Spacer(modifier = Modifier.height(16.dp)) }
                     }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
 
@@ -160,6 +171,7 @@ fun MyApplicationsScreen(
         }
     }
 }
+
 
 @Composable
 private fun ApplicationCard(

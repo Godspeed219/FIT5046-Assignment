@@ -62,17 +62,18 @@ fun EditVolunteerProfileScreen(
     var pendingSaveUser by remember { mutableStateOf<com.example.assignment_fit5046.datamodels.User?>(null) }
 
     val isLoading by mainViewModel.isLoading.collectAsState()
-    val successMessage by mainViewModel.successMessage.collectAsState()
+    val profileUpdateSuccess by mainViewModel.profileUpdateSuccess.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(successMessage) {
-        if (successMessage != null) {
+    LaunchedEffect(profileUpdateSuccess) {
+        if (profileUpdateSuccess) {
             pendingSaveUser?.let { authViewModel.updateCurrentUser(it) }
             pendingSaveUser = null
-            toastMessage = successMessage
+            toastMessage = "Profile updated successfully"
             mainViewModel.clearMessages()
+            mainViewModel.clearProfileUpdateSuccess()
             navController.popBackStack()
         }
     }

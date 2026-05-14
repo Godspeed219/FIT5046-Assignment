@@ -24,12 +24,16 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,159 +50,179 @@ import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.services.viewmodel.MainViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    mainViewModel: MainViewModel
 ) {
     val authState by authViewModel.authState.collectAsState()
     val currentUser = (authState as? AuthState.LoggedIn)?.user
+
+    val refreshedUser by mainViewModel.currentUser.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
+    val pullRefreshState = rememberPullToRefreshState()
+
     var companyExpanded by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+    // Propagate refreshed user data back into authViewModel so all screens see the update
+    LaunchedEffect(refreshedUser) {
+        refreshedUser?.let { authViewModel.updateCurrentUser(it) }
+    }
+
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { currentUser?.uid?.let { mainViewModel.refreshCurrentUser(it) } },
+        state = pullRefreshState,
+        modifier = Modifier.fillMaxSize()
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(bottom = 32.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 48.dp, bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(bottom = 32.dp)
             ) {
-                Box(modifier = Modifier.size(96.dp)) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = currentUser?.name ?: "Volunteer",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = currentUser?.email ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-
-                if (!currentUser?.bio.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = currentUser!!.bio,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                }
-            }
-        }
-
-        Column(modifier = Modifier.fillMaxWidth()) {
-
-            ProfileMenuItem(
-                icon = Icons.Default.Edit,
-                label = "Edit Profile",
-                onClick = { navController.navigate(Screen.EditVolunteerProfile.route) }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { companyExpanded = !companyExpanded }
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "Company",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = if (companyExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            AnimatedVisibility(visible = companyExpanded) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(top = 48.dp, bottom = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    SubMenuItem(
-                        label = "About Us",
-                        onClick = { navController.navigate(Screen.AboutUs.route) }
+                    Box(modifier = Modifier.size(96.dp)) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = currentUser?.name ?: "Volunteer",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
-                    SubMenuItem(
-                        label = "Contact Us",
-                        onClick = { navController.navigate(Screen.ContactUs.route) }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = currentUser?.email ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
                     )
-                    SubMenuItem(
-                        label = "Terms & Conditions",
-                        onClick = { navController.navigate(Screen.TermsConditions.route) }
-                    )
+
+                    if (!currentUser?.bio.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = currentUser!!.bio,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                    }
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+            Column(modifier = Modifier.fillMaxWidth()) {
 
-            ProfileMenuItem(
-                icon = Icons.Default.Logout,
-                label = "Logout",
-                tint = MaterialTheme.colorScheme.error,
-                onClick = { authViewModel.signOut() }
-            )
+                ProfileMenuItem(
+                    icon = Icons.Default.Edit,
+                    label = "Edit Profile",
+                    onClick = { navController.navigate(Screen.EditVolunteerProfile.route) }
+                )
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { companyExpanded = !companyExpanded }
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Business,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = "Company",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = if (companyExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                AnimatedVisibility(visible = companyExpanded) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        SubMenuItem(
+                            label = "About Us",
+                            onClick = { navController.navigate(Screen.AboutUs.route) }
+                        )
+                        SubMenuItem(
+                            label = "Contact Us",
+                            onClick = { navController.navigate(Screen.ContactUs.route) }
+                        )
+                        SubMenuItem(
+                            label = "Terms & Conditions",
+                            onClick = { navController.navigate(Screen.TermsConditions.route) }
+                        )
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+
+                ProfileMenuItem(
+                    icon = Icons.Default.Logout,
+                    label = "Logout",
+                    tint = MaterialTheme.colorScheme.error,
+                    onClick = { authViewModel.signOut() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 

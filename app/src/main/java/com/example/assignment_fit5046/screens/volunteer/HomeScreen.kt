@@ -73,9 +73,6 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("VolunteerLink") })
-        }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -95,12 +92,12 @@ fun HomeScreen(
                         ) {
                             Text(
                                 text = "Welcome back,",
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = currentUser?.name ?: "Volunteer",
-                                style = MaterialTheme.typography.headlineSmall,
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
                             )

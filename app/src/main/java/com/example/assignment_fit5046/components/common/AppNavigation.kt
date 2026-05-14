@@ -40,7 +40,6 @@ import com.example.assignment_fit5046.screens.volunteer.EditVolunteerProfileScre
 import com.example.assignment_fit5046.screens.volunteer.HomeScreen
 import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
 import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
-import com.example.assignment_fit5046.screens.volunteer.SearchScreen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -100,7 +99,6 @@ fun AppNavigation(
 
     val volunteerTopRoutes = setOf(
         Screen.VolunteerHome.route,
-        Screen.Search.route,
         Screen.MyApplications.route,
         Screen.VolunteerProfile.route
     )
@@ -174,9 +172,6 @@ fun AppNavigation(
                     mainViewModel = mainViewModel
                 )
             }
-            composable(Screen.Search.route) {
-                SearchScreen(navController = navController, mainViewModel = mainViewModel)
-            }
             composable(Screen.MyApplications.route) {
                 MyApplicationsScreen(
                     navController = navController,
@@ -185,7 +180,11 @@ fun AppNavigation(
                 )
             }
             composable(Screen.VolunteerProfile.route) {
-                ProfileScreen(navController = navController, authViewModel = authViewModel)
+                ProfileScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(Screen.EditVolunteerProfile.route) {
                 EditVolunteerProfileScreen(

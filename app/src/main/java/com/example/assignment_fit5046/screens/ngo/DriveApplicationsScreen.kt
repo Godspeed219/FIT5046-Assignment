@@ -155,7 +155,7 @@ fun DriveApplicationsScreen(
         ) {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
-                onRefresh = { mainViewModel.refreshDriveApplications(driveId) },
+                onRefresh = { mainViewModel.refreshApplicationsForDrive(driveId) },
                 state = pullRefreshState,
                 modifier = Modifier.fillMaxSize()
             ) {

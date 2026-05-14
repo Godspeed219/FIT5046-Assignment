@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,7 +21,6 @@ fun VolunteerNavBar(navController: NavController) {
 
     val items = listOf(
         Triple("Home", Screen.VolunteerHome.route, Icons.Default.Home),
-        Triple("Search", Screen.Search.route, Icons.Default.Search),
         Triple("Applications", Screen.MyApplications.route, Icons.Default.List),
         Triple("Profile", Screen.VolunteerProfile.route, Icons.Default.Person)
     )
