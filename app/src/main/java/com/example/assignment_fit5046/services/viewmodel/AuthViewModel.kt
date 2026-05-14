@@ -125,4 +125,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             _authState.value = AuthState.LoggedOut
         }
     }
+
+    fun updateCurrentUser(user: User) {
+        _authState.value = AuthState.LoggedIn(user)
+    }
 }

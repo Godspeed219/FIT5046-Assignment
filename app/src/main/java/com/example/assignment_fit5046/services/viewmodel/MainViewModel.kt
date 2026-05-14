@@ -17,6 +17,7 @@ import com.example.assignment_fit5046.services.remote.firebase.ApplicationServic
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _updatedUser = MutableStateFlow<User?>(null)
     val updatedUser: StateFlow<User?> = _updatedUser.asStateFlow()
+
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
     private val _allActiveDrives = MutableStateFlow<List<Drive>>(emptyList())
     val allActiveDrives: StateFlow<List<Drive>> = _allActiveDrives.asStateFlow()
@@ -310,13 +314,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 UserService.updateUser(user)
                     .onSuccess {
                         userDao.insertUser(user)
-                        _updatedUser.value = user
+                        val fresh = userDao.getUser()
+                        if (fresh != null) {
+                            _updatedUser.value = fresh
+                            _currentUser.value = fresh
+                        }
+                        delay(2000)
                         _successMessage.value = "Profile updated successfully"
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to update profile"; Log.e(
                         "FAILURE QUERY",
                         _errorMessage.value.toString(),
                     ) }
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun loadDriveApplications(driveId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                ApplicationService.getApplicationsByDrive(driveId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        val updated = _ngoApplications.value.filter { it.driveId != driveId } + apps
+                        _ngoApplications.value = updated
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
             } finally {
                 _isLoading.value = false
             }

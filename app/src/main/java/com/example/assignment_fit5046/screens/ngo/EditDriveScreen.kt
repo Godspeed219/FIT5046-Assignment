@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,8 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,6 +49,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.assignment_fit5046.components.common.AppLoader
+import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
 import com.example.assignment_fit5046.ui.StatusApproved
 import java.text.SimpleDateFormat
@@ -81,7 +81,8 @@ fun EditDriveScreen(
     val isLoading by mainViewModel.isLoading.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+
+    var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val datePickerState = rememberDatePickerState()
 
@@ -98,7 +99,7 @@ fun EditDriveScreen(
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage!!)
+            toastMessage = errorMessage
             mainViewModel.clearMessages()
         }
     }
@@ -132,187 +133,187 @@ fun EditDriveScreen(
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Drive Title") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Description") },
-                minLines = 4,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
-                label = { Text("Location") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (date.isEmpty()) "Pick Drive Date" else date)
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = maxVolunteers,
-                onValueChange = { maxVolunteers = it },
-                label = { Text("Max Volunteers") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text("Drive Banner", style = MaterialTheme.typography.titleSmall)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    .clickable { imagePickerLauncher.launch("image/*") },
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                when {
-                    bannerUri != null -> {
-                        AsyncImage(
-                            model = bannerUri,
-                            contentDescription = "Banner preview",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Drive Title") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    minLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { location = it },
+                    label = { Text("Location") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedButton(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (date.isEmpty()) "Pick Drive Date" else date)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = maxVolunteers,
+                    onValueChange = { maxVolunteers = it },
+                    label = { Text("Max Volunteers") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text("Drive Banner", style = MaterialTheme.typography.titleSmall)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
                         )
-                    }
-                    bannerUrl.isNotEmpty() -> {
-                        AsyncImage(
-                            model = bannerUrl,
-                            contentDescription = "Current banner",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    else -> {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.AddPhotoAlternate,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        bannerUri != null -> {
+                            AsyncImage(
+                                model = bannerUri,
+                                contentDescription = "Banner preview",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Tap to change banner",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                        bannerUrl.isNotEmpty() -> {
+                            AsyncImage(
+                                model = bannerUrl,
+                                contentDescription = "Current banner",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
                             )
+                        }
+                        else -> {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.AddPhotoAlternate,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Tap to change banner",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            if (bannerUri != null && bannerUrl == (drive?.bannerUrl ?: "")) {
+                if (bannerUri != null && bannerUrl == (drive?.bannerUrl ?: "")) {
+                    Button(
+                        onClick = {
+                            isUploading = true
+                            mainViewModel.uploadDriveBanner(bannerUri!!, context) { url ->
+                                bannerUrl = url ?: bannerUrl
+                                isUploading = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUploading
+                    ) {
+                        Text(if (isUploading) "Uploading..." else "Upload New Banner")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (bannerUrl != (drive?.bannerUrl ?: "") && bannerUrl.isNotEmpty()) {
+                    Text(
+                        "New banner uploaded",
+                        color = StatusApproved,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Button(
                     onClick = {
-                        isUploading = true
-                        mainViewModel.uploadDriveBanner(bannerUri!!, context) { url ->
-                            bannerUrl = url ?: bannerUrl
-                            isUploading = false
+                        drive?.let {
+                            mainViewModel.updateDrive(
+                                it.copy(
+                                    title = title,
+                                    description = description,
+                                    location = location,
+                                    date = date,
+                                    maxVolunteers = maxVolunteers.toIntOrNull() ?: it.maxVolunteers,
+                                    bannerUrl = bannerUrl
+                                )
+                            )
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isUploading
+                    enabled = !isLoading
                 ) {
-                    if (isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Upload New Banner")
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            if (bannerUrl != (drive?.bannerUrl ?: "") && bannerUrl.isNotEmpty()) {
-                Text(
-                    "New banner uploaded",
-                    color = StatusApproved,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    drive?.let {
-                        mainViewModel.updateDrive(
-                            it.copy(
-                                title = title,
-                                description = description,
-                                location = location,
-                                date = date,
-                                maxVolunteers = maxVolunteers.toIntOrNull() ?: it.maxVolunteers,
-                                bannerUrl = bannerUrl
-                            )
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
                     Text("Save Changes")
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            AppLoader(
+                isLoading = isLoading || isUploading,
+                role = UserRole.NGO
+            )
+
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.NGO,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }

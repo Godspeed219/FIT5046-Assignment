@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +51,7 @@ fun DriveManageCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
+            // Row 1: title + chips
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -57,7 +59,7 @@ fun DriveManageCard(
             ) {
                 Text(
                     text = drive.title,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
                         .weight(1f)
@@ -78,8 +80,8 @@ fun DriveManageCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     val (statusLabel, statusColor) = when (drive.status) {
-                        DriveStatus.ACTIVE -> "Current" to StatusApproved
-                        DriveStatus.CLOSED -> "Expired" to TextDisabled
+                        DriveStatus.ACTIVE -> "Active" to StatusApproved
+                        DriveStatus.CLOSED -> "Closed" to TextDisabled
                     }
                     AssistChip(
                         onClick = {},
@@ -98,68 +100,68 @@ fun DriveManageCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
+            // Row 2: date
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(15.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(drive.date, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = drive.date,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
+            // Row 3: location
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(15.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(drive.location, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = drive.location,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Row 4: full-width View Applications button
+            Button(
+                onClick = onViewApplications,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Icon(
-                    imageVector = Icons.Default.People,
+                    Icons.Default.People,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "$applicationCount applications",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    text = "View Applications ($applicationCount)",
                     fontWeight = FontWeight.Medium
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
+            // Row 5: Edit + Close/Reopen side by side
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
-                    onClick = onViewApplications,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        Icons.Default.People,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Applicants ($applicationCount)")
-                }
                 OutlinedButton(
                     onClick = onEdit,
                     modifier = Modifier.weight(1f)

@@ -27,8 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -45,8 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -76,13 +76,13 @@ fun MyApplicationsScreen(
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
     var pendingWithdraw by remember { mutableStateOf<Application?>(null) }
 
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
         if (msg != null) {
-            snackbarHostState.showSnackbar(msg)
+            toastMessage = msg
             mainViewModel.clearMessages()
         }
     }
@@ -110,46 +110,53 @@ fun MyApplicationsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Applications") }) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        topBar = { TopAppBar(title = { Text("My Applications") }) }
     ) { paddingValues ->
-        if (volunteerApplications.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Assignment,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        "No applications yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (volunteerApplications.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Assignment,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "No applications yet",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(volunteerApplications, key = { it.applicationId }) { application ->
+                        ApplicationCard(
+                            application = application,
+                            onWithdraw = { pendingWithdraw = application }
+                        )
+                    }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                items(volunteerApplications, key = { it.applicationId }) { application ->
-                    ApplicationCard(
-                        application = application,
-                        onWithdraw = { pendingWithdraw = application }
-                    )
-                }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
-            }
+
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.VOLUNTEER,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }

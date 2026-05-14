@@ -31,8 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -54,7 +52,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -86,7 +86,7 @@ fun DriveDetailScreen(
     val drive = allActiveDrives.find { it.driveId == driveId }
     val existingApplication = volunteerApplications.find { it.driveId == driveId }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
     var showApplyDialog by remember { mutableStateOf(false) }
     var showWithdrawDialog by remember { mutableStateOf(false) }
     var applyMessage by remember { mutableStateOf("") }
@@ -94,7 +94,7 @@ fun DriveDetailScreen(
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
         if (msg != null) {
-            snackbarHostState.showSnackbar(msg)
+            toastMessage = msg
             mainViewModel.clearMessages()
         }
     }
@@ -178,7 +178,6 @@ fun DriveDetailScreen(
                 }
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (drive != null) {
                 Surface(shadowElevation = 8.dp, tonalElevation = 2.dp) {
@@ -220,115 +219,121 @@ fun DriveDetailScreen(
             }
         }
     ) { paddingValues ->
-        if (drive == null) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    "Drive not found",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            return@Scaffold
-        }
-
-        LazyColumn(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            item {
-                if (drive.bannerUrl.isNotEmpty()) {
-                    AsyncImage(
-                        model = drive.bannerUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VolunteerActivism,
-                            contentDescription = null,
-                            modifier = Modifier.size(72.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            if (drive == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = drive.ngoName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp)
+                        "Drive not found",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    SuggestionChip(
-                        onClick = {},
-                        label = { Text(drive.category) },
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    item {
+                        if (drive.bannerUrl.isNotEmpty()) {
+                            AsyncImage(
+                                model = drive.bannerUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VolunteerActivism,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(72.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = drive.ngoName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
+                            )
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text(drive.category) },
+                                colors = SuggestionChipDefaults.suggestionChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            )
+                        }
+                    }
+
+                    item {
+                        Text(
+                            text = drive.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
-                    )
+                    }
+
+                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
+
+                    item {
+                        Text(
+                            text = "Event Details",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    item {
+                        DriveDetailRow(icon = Icons.Default.CalendarToday, text = drive.date)
+                    }
+
+                    item {
+                        DriveDetailRow(icon = Icons.Default.LocationOn, text = drive.location)
+                    }
+
+                    item {
+                        DriveDetailRow(
+                            icon = Icons.Default.Group,
+                            text = "${drive.maxVolunteers - drive.currentVolunteers} volunteer spots remaining"
+                        )
+                    }
+
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
 
-            item {
-                Text(
-                    text = drive.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-
-            item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
-
-            item {
-                Text(
-                    text = "Event Details",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-
-            item {
-                DriveDetailRow(icon = Icons.Default.CalendarToday, text = drive.date)
-            }
-
-            item {
-                DriveDetailRow(icon = Icons.Default.LocationOn, text = drive.location)
-            }
-
-            item {
-                DriveDetailRow(
-                    icon = Icons.Default.Group,
-                    text = "${drive.maxVolunteers - drive.currentVolunteers} volunteer spots remaining"
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.VOLUNTEER,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }

@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -24,8 +23,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,6 +39,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.components.common.AppLoader
+import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -61,15 +61,19 @@ fun EditNgoProfileScreen(
     var ngoDescription by remember(currentUser) { mutableStateOf(currentUser?.ngoDescription ?: "") }
     var bio by remember(currentUser) { mutableStateOf(currentUser?.bio ?: "") }
     var phoneNumber by remember(currentUser) { mutableStateOf(currentUser?.phoneNumber ?: "") }
+    var pendingSaveUser by remember { mutableStateOf<com.example.assignment_fit5046.datamodels.User?>(null) }
 
     val isLoading by mainViewModel.isLoading.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
+
+    var toastMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(successMessage) {
         if (successMessage != null) {
-            snackbarHostState.showSnackbar(successMessage!!)
+            pendingSaveUser?.let { authViewModel.updateCurrentUser(it) }
+            pendingSaveUser = null
+            toastMessage = successMessage
             mainViewModel.clearMessages()
             navController.popBackStack()
         }
@@ -77,7 +81,7 @@ fun EditNgoProfileScreen(
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage!!)
+            toastMessage = errorMessage
             mainViewModel.clearMessages()
         }
     }
@@ -92,145 +96,153 @@ fun EditNgoProfileScreen(
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(96.dp)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Business,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Profile photo coming soon",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Profile photo coming soon",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedTextField(
-                value = currentUser?.email ?: "",
-                onValueChange = {},
-                label = { Text("Email") },
-                enabled = false,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = currentUser?.email ?: "",
+                    onValueChange = {},
+                    label = { Text("Email") },
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = currentUser?.role?.name ?: "",
-                onValueChange = {},
-                label = { Text("Role") },
-                enabled = false,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = currentUser?.role?.name ?: "",
+                    onValueChange = {},
+                    label = { Text("Role") },
+                    enabled = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(20.dp))
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Display Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Display Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = ngoName,
-                onValueChange = { ngoName = it },
-                label = { Text("Organisation Name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = ngoName,
+                    onValueChange = { ngoName = it },
+                    label = { Text("Organisation Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = ngoDescription,
-                onValueChange = { ngoDescription = it },
-                label = { Text("Organisation Description") },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = ngoDescription,
+                    onValueChange = { ngoDescription = it },
+                    label = { Text("Organisation Description") },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = bio,
-                onValueChange = { bio = it },
-                label = { Text("Bio") },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = { bio = it },
+                    label = { Text("Bio") },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = phoneNumber,
-                onValueChange = { phoneNumber = it },
-                label = { Text("Phone Number") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
+                OutlinedTextField(
+                    value = phoneNumber,
+                    onValueChange = { phoneNumber = it },
+                    label = { Text("Phone Number") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    currentUser?.let { user ->
-                        mainViewModel.saveUserProfile(
-                            user.copy(
+                Button(
+                    onClick = {
+                        currentUser?.let { user ->
+                            val updatedUser = user.copy(
                                 name = name,
                                 ngoName = ngoName,
                                 ngoDescription = ngoDescription,
                                 bio = bio,
                                 phoneNumber = phoneNumber
                             )
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
+                            pendingSaveUser = updatedUser
+                            mainViewModel.saveUserProfile(updatedUser)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
                     Text("Save Changes")
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            AppLoader(
+                isLoading = isLoading,
+                role = UserRole.NGO
+            )
+
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.NGO,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }

@@ -27,7 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -42,8 +41,6 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -66,9 +63,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.assignment_fit5046.components.common.AppLoader
+import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -112,7 +112,7 @@ fun CreateDriveScreen(
     val successMessage by mainViewModel.successMessage.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -135,7 +135,7 @@ fun CreateDriveScreen(
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage!!)
+            toastMessage = errorMessage
             mainViewModel.clearMessages()
         }
     }
@@ -169,74 +169,90 @@ fun CreateDriveScreen(
                     }
                 }
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
         ) {
-            StepperHeader(currentStep = currentStep)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                StepperHeader(currentStep = currentStep)
 
-            when (currentStep) {
-                1 -> Step1Content(
-                    title = title,
-                    onTitleChange = { title = it },
-                    description = description,
-                    onDescriptionChange = { description = it },
-                    category = category,
-                    onCategoryChange = { category = it },
-                    categoryExpanded = categoryExpanded,
-                    onCategoryExpandedChange = { categoryExpanded = it },
-                    onNext = { currentStep = 2 }
-                )
-                2 -> Step2Content(
-                    location = location,
-                    onLocationChange = { location = it },
-                    date = date,
-                    onPickDate = { showDatePicker = true },
-                    maxVolunteers = maxVolunteers,
-                    onMaxVolunteersChange = { maxVolunteers = it },
-                    onBack = { currentStep = 1 },
-                    onNext = { currentStep = 3 }
-                )
-                3 -> Step3Content(
-                    bannerUri = bannerUri,
-                    bannerUrl = bannerUrl,
-                    isUploading = isUploading,
-                    isLoading = isLoading,
-                    onPickImage = { imagePickerLauncher.launch("image/*") },
-                    onUpload = {
-                        isUploading = true
-                        mainViewModel.uploadDriveBanner(bannerUri!!, context) { url ->
-                            bannerUrl = url ?: ""
-                            isUploading = false
-                        }
-                    },
-                    onBack = { currentStep = 2 },
-                    onPost = {
-                        mainViewModel.createDrive(
-                            Drive(
-                                driveId = "",
-                                ngoId = currentUser?.uid ?: "",
-                                ngoName = currentUser?.ngoName ?: currentUser?.name ?: "",
-                                title = title,
-                                description = description,
-                                location = location,
-                                date = date,
-                                maxVolunteers = maxVolunteers.toIntOrNull() ?: 0,
-                                currentVolunteers = 0,
-                                category = category,
-                                status = DriveStatus.ACTIVE,
-                                createdAt = System.currentTimeMillis(),
-                                bannerUrl = bannerUrl
+                when (currentStep) {
+                    1 -> Step1Content(
+                        title = title,
+                        onTitleChange = { title = it },
+                        description = description,
+                        onDescriptionChange = { description = it },
+                        category = category,
+                        onCategoryChange = { category = it },
+                        categoryExpanded = categoryExpanded,
+                        onCategoryExpandedChange = { categoryExpanded = it },
+                        onNext = { currentStep = 2 }
+                    )
+                    2 -> Step2Content(
+                        location = location,
+                        onLocationChange = { location = it },
+                        date = date,
+                        onPickDate = { showDatePicker = true },
+                        maxVolunteers = maxVolunteers,
+                        onMaxVolunteersChange = { maxVolunteers = it },
+                        onBack = { currentStep = 1 },
+                        onNext = { currentStep = 3 }
+                    )
+                    3 -> Step3Content(
+                        bannerUri = bannerUri,
+                        bannerUrl = bannerUrl,
+                        isUploading = isUploading,
+                        isLoading = isLoading,
+                        onPickImage = { imagePickerLauncher.launch("image/*") },
+                        onUpload = {
+                            isUploading = true
+                            mainViewModel.uploadDriveBanner(bannerUri!!, context) { url ->
+                                bannerUrl = url ?: ""
+                                isUploading = false
+                            }
+                        },
+                        onBack = { currentStep = 2 },
+                        onPost = {
+                            mainViewModel.createDrive(
+                                Drive(
+                                    driveId = "",
+                                    ngoId = currentUser?.uid ?: "",
+                                    ngoName = currentUser?.ngoName ?: currentUser?.name ?: "",
+                                    title = title,
+                                    description = description,
+                                    location = location,
+                                    date = date,
+                                    maxVolunteers = maxVolunteers.toIntOrNull() ?: 0,
+                                    currentVolunteers = 0,
+                                    category = category,
+                                    status = DriveStatus.ACTIVE,
+                                    createdAt = System.currentTimeMillis(),
+                                    bannerUrl = bannerUrl
+                                )
                             )
-                        )
-                    }
-                )
+                        }
+                    )
+                }
             }
+
+            AppLoader(
+                isLoading = isLoading || isUploading,
+                role = UserRole.NGO
+            )
+
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.NGO,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }
@@ -521,15 +537,7 @@ private fun Step3Content(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isUploading
             ) {
-                if (isUploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Upload Banner")
-                }
+                Text(if (isUploading) "Uploading..." else "Upload Banner")
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -560,15 +568,7 @@ private fun Step3Content(
                 enabled = !isLoading,
                 modifier = Modifier.weight(1f)
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Post Drive")
-                }
+                Text("Post Drive")
             }
         }
 

@@ -14,6 +14,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.assignment_fit5046.components.ngo.NgoNavBar
@@ -74,6 +75,22 @@ fun AppNavigation(
     val authState by authViewModel.authState.collectAsState()
     var currentRole by remember { mutableStateOf<UserRole?>(null) }
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val volunteerTopRoutes = setOf(
+        Screen.VolunteerHome.route,
+        Screen.Search.route,
+        Screen.MyApplications.route,
+        Screen.VolunteerProfile.route
+    )
+    val ngoTopRoutes = setOf(
+        Screen.NgoDashboard.route,
+        Screen.CreateDrive.route,
+        Screen.ManageDrives.route,
+        Screen.NgoProfile.route
+    )
+
     // Central auth-driven navigation
     LaunchedEffect(authState) {
         when (val state = authState) {
@@ -101,8 +118,8 @@ fun AppNavigation(
     Scaffold(
         bottomBar = {
             when (currentRole) {
-                UserRole.VOLUNTEER -> VolunteerNavBar(navController = navController)
-                UserRole.NGO -> NgoNavBar(navController = navController)
+                UserRole.VOLUNTEER -> if (currentRoute in volunteerTopRoutes) VolunteerNavBar(navController = navController)
+                UserRole.NGO -> if (currentRoute in ngoTopRoutes) NgoNavBar(navController = navController)
                 null -> {}
             }
         }
@@ -192,7 +209,11 @@ fun AppNavigation(
                 arguments = listOf(navArgument("driveId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val driveId = backStackEntry.arguments?.getString("driveId") ?: ""
-                DriveApplicationsScreen(navController = navController, driveId = driveId)
+                DriveApplicationsScreen(
+                    navController = navController,
+                    driveId = driveId,
+                    mainViewModel = mainViewModel
+                )
             }
             composable(
                 route = "${Screen.EditDrive.route}/{driveId}",

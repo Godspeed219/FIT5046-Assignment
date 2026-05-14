@@ -1,6 +1,5 @@
 package com.example.assignment_fit5046.screens.ngo
 
-import android.R.attr.text
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,31 +16,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.components.common.AppLoader
+import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -62,7 +63,8 @@ fun NgoDashboardScreen(
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    var toastMessage by remember { mutableStateOf<String?>(null) }
+    val pullRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) }
@@ -71,7 +73,7 @@ fun NgoDashboardScreen(
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
         if (msg != null) {
-            snackbarHostState.showSnackbar(msg)
+            toastMessage = msg
             mainViewModel.clearMessages()
         }
     }
@@ -80,112 +82,123 @@ fun NgoDashboardScreen(
     val totalApplicants = ngoApplications.size
     val pendingCount = ngoApplications.count { it.status == ApplicationStatus.PENDING }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        LazyColumn(
+    Scaffold { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            item {
-                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    Text(
-                        text = "Welcome back,",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = currentUser?.ngoName ?: currentUser?.name ?: "",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = { Icon(Icons.Default.Campaign, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
-                        value = "$totalDrives",
-                        label = "Drives"
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = { Icon(Icons.Default.People, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
-                        value = "$totalApplicants",
-                        label = "Applicants"
-                    )
-                    StatCard(
-                        modifier = Modifier.weight(1f),
-                        icon = { Icon(Icons.AutoMirrored.Filled.Assignment, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
-                        value = "$pendingCount",
-                        label = "Pending"
-                    )
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-
-            if (isLoading) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            PullToRefreshBox(
+                isRefreshing = isLoading && ngoDrives.isNotEmpty(),
+                onRefresh = { currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) } },
+                state = pullRefreshState,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    item {
+                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                            Text(
+                                text = "Welcome back,",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = currentUser?.ngoName ?: currentUser?.name ?: "",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                }
-            }
 
-            item {
-                Text(
-                    text = "Your Active Drives",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-            }
-
-            items(ngoDrives, key = { it.driveId }) { drive ->
-                val appCount = ngoApplications.count { it.driveId == drive.driveId }
-                DriveManageCard(
-                    drive = drive,
-                    applicationCount = appCount,
-                    onViewApplications = {
-                        navController.navigate("${Screen.NgoApplications.route}/${drive.driveId}")
-                    },
-                    onEdit = {
-                        navController.navigate("${Screen.EditDrive.route}/${drive.driveId}")
-                    },
-                    onToggleStatus = {
-                        val newStatus = if (drive.status == DriveStatus.ACTIVE) DriveStatus.CLOSED else DriveStatus.ACTIVE
-                        mainViewModel.updateDriveStatus(drive.driveId, newStatus)
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = { Icon(Icons.Default.Campaign, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
+                                value = "$totalDrives",
+                                label = "Drives"
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = { Icon(Icons.Default.People, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
+                                value = "$totalApplicants",
+                                label = "Applicants"
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = { Icon(Icons.AutoMirrored.Filled.Assignment, null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary) },
+                                value = "$pendingCount",
+                                label = "Pending"
+                            )
+                        }
                     }
-                )
-            }
 
-            if (!isLoading && ngoDrives.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                    item {
                         Text(
-                            "No drives yet. Create your first drive!",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "Your Active Drives",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
+
+                    items(ngoDrives, key = { it.driveId }) { drive ->
+                        val appCount = ngoApplications.count { it.driveId == drive.driveId }
+                        DriveManageCard(
+                            drive = drive,
+                            applicationCount = appCount,
+                            onViewApplications = {
+                                navController.navigate("${Screen.NgoApplications.route}/${drive.driveId}")
+                            },
+                            onEdit = {
+                                navController.navigate("${Screen.EditDrive.route}/${drive.driveId}")
+                            },
+                            onToggleStatus = {
+                                val newStatus = if (drive.status == DriveStatus.ACTIVE) DriveStatus.CLOSED else DriveStatus.ACTIVE
+                                mainViewModel.updateDriveStatus(drive.driveId, newStatus)
+                            }
+                        )
+                    }
+
+                    if (!isLoading && ngoDrives.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "No drives yet. Create your first drive!",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            AppLoader(
+                isLoading = isLoading && ngoDrives.isEmpty(),
+                role = UserRole.NGO
+            )
+
+            AppToast(
+                message = toastMessage ?: "",
+                isVisible = toastMessage != null,
+                role = UserRole.NGO,
+                onDismiss = { toastMessage = null }
+            )
         }
     }
 }
