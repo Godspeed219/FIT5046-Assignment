@@ -74,6 +74,7 @@ fun DriveApplicationsScreen(
     val applications = ngoApplications.filter { it.driveId == driveId }
 
     val isLoading by mainViewModel.isLoading.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
@@ -153,8 +154,8 @@ fun DriveApplicationsScreen(
                 .padding(paddingValues)
         ) {
             PullToRefreshBox(
-                isRefreshing = isLoading && applications.isNotEmpty(),
-                onRefresh = { mainViewModel.loadDriveApplications(driveId) },
+                isRefreshing = isRefreshing,
+                onRefresh = { mainViewModel.refreshDriveApplications(driveId) },
                 state = pullRefreshState,
                 modifier = Modifier.fillMaxSize()
             ) {

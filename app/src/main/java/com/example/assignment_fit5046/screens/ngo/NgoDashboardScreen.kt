@@ -60,6 +60,7 @@ fun NgoDashboardScreen(
     val ngoDrives by mainViewModel.ngoDrives.collectAsState()
     val ngoApplications by mainViewModel.ngoApplications.collectAsState()
     val isLoading by mainViewModel.isLoading.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
@@ -89,8 +90,8 @@ fun NgoDashboardScreen(
                 .padding(paddingValues)
         ) {
             PullToRefreshBox(
-                isRefreshing = isLoading && ngoDrives.isNotEmpty(),
-                onRefresh = { currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) } },
+                isRefreshing = isRefreshing,
+                onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDashboard(it) } },
                 state = pullRefreshState,
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -103,7 +104,7 @@ fun NgoDashboardScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Text(
-                                text = currentUser?.ngoName ?: currentUser?.name ?: "",
+                                text = currentUser?.name ?: "",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )

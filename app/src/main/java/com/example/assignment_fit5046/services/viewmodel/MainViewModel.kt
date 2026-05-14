@@ -28,6 +28,9 @@ import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -67,6 +70,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _searchResults = MutableStateFlow<List<Drive>>(emptyList())
     val searchResults: StateFlow<List<Drive>> = _searchResults.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -146,6 +152,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _successMessage.value = "Drive deleted"
                 }
                 .onFailure { _errorMessage.value = it.message }
+        }
+    }
+
+    fun closeDrive(driveId: String) {
+        viewModelScope.launch {
+            DriveService.updateDriveStatus(driveId, DriveStatus.CLOSED)
+                .onSuccess {
+                    _ngoDrives.value = _ngoDrives.value.map { drive ->
+                        if (drive.driveId == driveId) drive.copy(status = DriveStatus.CLOSED) else drive
+                    }
+                    _ngoDrives.value.find { it.driveId == driveId }?.let { driveDao.insertDrive(it) }
+                    _successMessage.value = "Drive closed"
+                }
+                .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
+        }
+    }
+
+    fun expirePassedDrives(ngoId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val today = sdf.parse(sdf.format(Date())) ?: return@launch
+
+                DriveService.getDrivesByNgo(ngoId)
+                    .onSuccess { drives ->
+                        drives.filter { it.status == DriveStatus.ACTIVE }.forEach { drive ->
+                            val driveDate = try { sdf.parse(drive.date) } catch (e: Exception) { null }
+                                ?: return@forEach
+                            if (driveDate.before(today)) {
+                                DriveService.updateDriveStatus(drive.driveId, DriveStatus.CLOSED)
+                                    .onSuccess { driveDao.insertDrive(drive.copy(status = DriveStatus.CLOSED)) }
+                                    .onFailure { Log.e("EXPIRE_DRIVES", it.message.toString()) }
+                            }
+                        }
+                        val refreshed = driveDao.getAllDrives().filter { it.ngoId == ngoId }
+                        _ngoDrives.value = refreshed
+                    }
+                    .onFailure { Log.e("EXPIRE_DRIVES", it.message.toString()) }
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
@@ -280,7 +328,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshVolunteerHome(volunteerId: String) {
         viewModelScope.launch {
-            _isLoading.value = true
+            _isRefreshing.value = true
             try {
                 DriveService.getAllActiveDrives()
                     .onSuccess { drives ->
@@ -302,7 +350,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _errorMessage.value.toString(),
                     ) }
             } finally {
-                _isLoading.value = false
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshNgoDashboard(ngoId: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                DriveService.getDrivesByNgo(ngoId)
+                    .onSuccess { drives ->
+                        driveDao.insertDrives(drives)
+                        val fresh = drives.filter { it.ngoId == ngoId }
+                        _ngoDrives.value = fresh
+
+                        val allApplications = mutableListOf<VolunteerApplication>()
+                        fresh.forEach { drive ->
+                            ApplicationService.getApplicationsByDrive(drive.driveId)
+                                .onSuccess { apps ->
+                                    applicationDao.insertApplications(apps)
+                                    allApplications.addAll(apps)
+                                }
+                                .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
+                        }
+                        _ngoApplications.value = allApplications
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
+            } finally {
+                _isRefreshing.value = false
+            }
+        }
+    }
+
+    fun refreshDriveApplications(driveId: String) {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                ApplicationService.getApplicationsByDrive(driveId)
+                    .onSuccess { apps ->
+                        applicationDao.insertApplications(apps)
+                        val updated = _ngoApplications.value.filter { it.driveId != driveId } + apps
+                        _ngoApplications.value = updated
+                    }
+                    .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

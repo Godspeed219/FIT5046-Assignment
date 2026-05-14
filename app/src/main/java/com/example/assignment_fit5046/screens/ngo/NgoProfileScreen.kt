@@ -96,7 +96,7 @@ fun NgoProfileScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = currentUser?.ngoName ?: currentUser?.name ?: "Organisation",
+                    text = currentUser?.name ?: "Organisation",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary
@@ -113,7 +113,7 @@ fun NgoProfileScreen(
                 if (!currentUser?.bio.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = currentUser!!.bio,
+                        text = currentUser.bio,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center,

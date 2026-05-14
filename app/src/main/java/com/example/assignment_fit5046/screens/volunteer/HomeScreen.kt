@@ -55,6 +55,7 @@ fun HomeScreen(
     val allActiveDrives by mainViewModel.allActiveDrives.collectAsState()
     val quote by mainViewModel.quote.collectAsState()
     val isLoading by mainViewModel.isLoading.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
@@ -82,7 +83,7 @@ fun HomeScreen(
                 .padding(paddingValues)
         ) {
             PullToRefreshBox(
-                isRefreshing = isLoading && allActiveDrives.isNotEmpty(),
+                isRefreshing = isRefreshing,
                 onRefresh = { currentUser?.uid?.let { mainViewModel.refreshVolunteerHome(it) } },
                 state = pullRefreshState,
                 modifier = Modifier.fillMaxSize()

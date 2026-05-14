@@ -49,6 +49,12 @@ import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import android.content.Context
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.ui.platform.LocalContext
+import com.example.assignment_fit5046.datamodels.Drive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,16 +69,29 @@ fun ManageDrivesScreen(
     val ngoDrives by mainViewModel.ngoDrives.collectAsState()
     val ngoApplications by mainViewModel.ngoApplications.collectAsState()
     val isLoading by mainViewModel.isLoading.collectAsState()
+    val isRefreshing by mainViewModel.isRefreshing.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
+    var driveToClose by remember { mutableStateOf<Drive?>(null) }
     val pullRefreshState = rememberPullToRefreshState()
+    val context = LocalContext.current
 
     val currentDrives = ngoDrives.filter { it.status == DriveStatus.ACTIVE }
     val expiredDrives = ngoDrives.filter { it.status == DriveStatus.CLOSED }
     val displayedDrives = if (selectedTabIndex == 0) currentDrives else expiredDrives
+
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val lastCheck = prefs.getLong("last_expire_check", 0L)
+        val now = System.currentTimeMillis()
+        if (now - lastCheck > 86400000L) {
+            currentUser?.uid?.let { mainViewModel.expirePassedDrives(it) }
+            prefs.edit().putLong("last_expire_check", now).apply()
+        }
+    }
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) }
@@ -84,6 +103,30 @@ fun ManageDrivesScreen(
             toastMessage = msg
             mainViewModel.clearMessages()
         }
+    }
+
+    driveToClose?.let { drive ->
+        AlertDialog(
+            onDismissRequest = { driveToClose = null },
+            icon = { Icon(Icons.Default.Archive, contentDescription = null) },
+            title = { Text("Close this drive?") },
+            text = {
+                Text("This will permanently close \"${drive.title}\". Volunteers will no longer be able to apply. This cannot be undone.")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    mainViewModel.closeDrive(drive.driveId)
+                    driveToClose = null
+                }) {
+                    Text("Yes, Close")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { driveToClose = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -118,10 +161,10 @@ fun ManageDrivesScreen(
                 }
 
                 PullToRefreshBox(
-                    isRefreshing = isLoading && ngoDrives.isNotEmpty(),
-                    onRefresh = { currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) } },
+                    isRefreshing = isRefreshing,
+                    onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDashboard(it) } },
                     state = pullRefreshState,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).padding(vertical = 18.dp)
                 ) {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         when {
@@ -187,8 +230,7 @@ fun ManageDrivesScreen(
                                         navController.navigate("${Screen.EditDrive.route}/${drive.driveId}")
                                     },
                                     onToggleStatus = {
-                                        val newStatus = if (drive.status == DriveStatus.ACTIVE) DriveStatus.CLOSED else DriveStatus.ACTIVE
-                                        mainViewModel.updateDriveStatus(drive.driveId, newStatus)
+                                        if (drive.status == DriveStatus.ACTIVE) driveToClose = drive
                                     }
                                 )
                             }

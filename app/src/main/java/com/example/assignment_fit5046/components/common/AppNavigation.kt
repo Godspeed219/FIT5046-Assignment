@@ -1,5 +1,7 @@
 package com.example.assignment_fit5046.components.common
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -70,10 +72,28 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     onRoleChanged: (UserRole) -> Unit = {}
 ) {
+    val authState by authViewModel.authState.collectAsState()
+
+    // Block NavHost until Firebase auth check resolves — prevents login screen flash on relaunch
+    if (authState is AuthState.Loading) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AppLoader(isLoading = true, role = UserRole.VOLUNTEER)
+        }
+        return
+    }
+
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
-    val authState by authViewModel.authState.collectAsState()
-    var currentRole by remember { mutableStateOf<UserRole?>(null) }
+
+    // Derive start destination from resolved auth state so no login flash for logged-in users
+    val startDestination = when (val s = authState) {
+        is AuthState.LoggedIn -> if (s.user.role == UserRole.VOLUNTEER)
+            Screen.VolunteerHome.route else Screen.NgoDashboard.route
+        else -> Screen.Login.route
+    }
+
+    // Initialise currentRole from resolved auth state to avoid first-frame missing bottom nav
+    var currentRole by remember { mutableStateOf((authState as? AuthState.LoggedIn)?.user?.role) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -126,7 +146,7 @@ fun AppNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Login.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Login.route) {
