@@ -45,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.LottieEmptyState
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
@@ -128,27 +130,11 @@ fun MyApplicationsScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 if (volunteerApplications.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Default.Assignment,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                "No applications yet",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
+                    LottieEmptyState(
+                        rawRes = R.raw.empty_inbox,
+                        title = "No applications yet",
+                        subtitle = "Start exploring drives and apply to get involved"
+                    )
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(volunteerApplications, key = { it.applicationId }) { application ->

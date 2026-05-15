@@ -43,8 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.LottieEmptyState
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.volunteer.DriveCard
 import com.example.assignment_fit5046.components.volunteer.QuoteCard
@@ -188,42 +190,26 @@ fun HomeScreen(
                     // Empty state
                     if (!isLoading && filteredDrives.isEmpty()) {
                         item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = Icons.Default.SearchOff,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(64.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    if (searchQuery.isNotEmpty() || selectedCategory != "All") {
-                                        Text(
-                                            "No drives match your search",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            textAlign = TextAlign.Center
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
+                            if (searchQuery.isNotEmpty() || selectedCategory != "All") {
+                                LottieEmptyState(
+                                    rawRes = R.raw.empty_search,
+                                    title = "No drives found",
+                                    subtitle = "Try a different search or category",
+                                    action = {
                                         TextButton(onClick = {
                                             searchQuery = ""
                                             selectedCategory = "All"
                                         }) {
                                             Text("Clear filters")
                                         }
-                                    } else {
-                                        Text(
-                                            "No drives available right now",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
                                     }
-                                }
+                                )
+                            } else {
+                                LottieEmptyState(
+                                    rawRes = R.raw.empty_search,
+                                    title = "No drives near you",
+                                    subtitle = "Check back soon for new opportunities"
+                                )
                             }
                         }
                     }

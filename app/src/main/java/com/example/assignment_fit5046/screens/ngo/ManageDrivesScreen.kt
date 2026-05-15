@@ -42,6 +42,7 @@ import androidx.navigation.NavController
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.LottieEmptyState
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
 import com.example.assignment_fit5046.datamodels.DriveStatus
@@ -169,51 +170,35 @@ fun ManageDrivesScreen(
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         when {
                             ngoDrives.isEmpty() -> item {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 64.dp, start = 48.dp, end = 48.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_empty_drives),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(180.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    Text(
-                                        "No drives yet",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        "Create your first drive and start finding volunteers",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Spacer(modifier = Modifier.height(32.dp))
-                                    Button(
-                                        onClick = { navController.navigate(Screen.CreateDrive.route) },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("Create Your First Drive")
+                                LottieEmptyState(
+                                    rawRes = R.raw.empty_search,
+                                    title = "No active drives",
+                                    subtitle = "Create a drive to start finding volunteers",
+                                    action = {
+                                        Button(onClick = { navController.navigate(Screen.CreateDrive.route) }) {
+                                            Text("Create Drive")
+                                        }
                                     }
-                                }
+                                )
                             }
 
                             displayedDrives.isEmpty() -> item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        if (selectedTabIndex == 0) "No current drives" else "No expired drives",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                if (selectedTabIndex == 0) {
+                                    LottieEmptyState(
+                                        rawRes = R.raw.empty_search,
+                                        title = "No active drives",
+                                        subtitle = "Create a drive to start finding volunteers",
+                                        action = {
+                                            Button(onClick = { navController.navigate(Screen.CreateDrive.route) }) {
+                                                Text("Create Drive")
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    LottieEmptyState(
+                                        rawRes = R.raw.empty_inbox,
+                                        title = "No closed drives",
+                                        subtitle = "Drives you close or that expire will appear here"
                                     )
                                 }
                             }

@@ -86,4 +86,10 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
+
+    // Lottie
+    implementation("com.airbnb.android:lottie-compose:6.7.1")
+
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.5.0")
 }

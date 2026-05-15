@@ -7,15 +7,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.datamodels.UserRole
-import com.example.assignment_fit5046.ui.NgoPrimary
-import com.example.assignment_fit5046.ui.VolunteerPrimary
 
 @Composable
 fun AppLoader(
@@ -23,7 +26,8 @@ fun AppLoader(
     role: UserRole,
     modifier: Modifier = Modifier
 ) {
-    val indicatorColor = if (role == UserRole.NGO) NgoPrimary else VolunteerPrimary
+    val rawRes = if (role == UserRole.NGO) R.raw.loading_ngo else R.raw.loading_volunteer
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(rawRes))
 
     AnimatedVisibility(
         visible = isLoading,
@@ -37,10 +41,10 @@ fun AppLoader(
                 .background(Color.Black.copy(alpha = 0.35f)),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(
-                color = indicatorColor,
-                strokeWidth = 3.dp,
-                modifier = Modifier.size(48.dp)
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(150.dp)
             )
         }
     }

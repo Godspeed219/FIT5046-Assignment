@@ -8,24 +8,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.Screen
-import com.example.assignment_fit5046.ui.StatusApproved
 
 @Composable
 fun DriveConfirmationScreen(navController: NavController) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.success))
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -33,11 +36,10 @@ fun DriveConfirmationScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = null,
-            modifier = Modifier.size(120.dp),
-            tint = StatusApproved
+        LottieAnimation(
+            composition = composition,
+            iterations = 1,
+            modifier = Modifier.size(200.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))

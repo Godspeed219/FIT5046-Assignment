@@ -36,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.LottieEmptyState
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
@@ -170,18 +172,11 @@ fun NgoDashboardScreen(
 
                     if (!isLoading && ngoDrives.isEmpty()) {
                         item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    "No drives yet. Create your first drive!",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            LottieEmptyState(
+                                rawRes = R.raw.empty_search,
+                                title = "No active drives",
+                                subtitle = "Post your first drive to start finding volunteers"
+                            )
                         }
                     }
 
