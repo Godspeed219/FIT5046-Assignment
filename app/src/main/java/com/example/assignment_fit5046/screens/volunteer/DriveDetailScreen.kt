@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.VolunteerActivism
@@ -38,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.volunteer.WeatherCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
@@ -82,6 +85,8 @@ fun DriveDetailScreen(
     val volunteerApplications by mainViewModel.volunteerApplications.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
+    val driveWeather by mainViewModel.driveWeather.collectAsState()
+    val driveDistance by mainViewModel.driveDistance.collectAsState()
 
     val drive = allActiveDrives.find { it.driveId == driveId }
     val existingApplication = volunteerApplications.find { it.driveId == driveId }
@@ -90,6 +95,14 @@ fun DriveDetailScreen(
     var showApplyDialog by remember { mutableStateOf(false) }
     var showWithdrawDialog by remember { mutableStateOf(false) }
     var applyMessage by remember { mutableStateOf("") }
+
+    LaunchedEffect(drive?.driveId) {
+        drive?.let { mainViewModel.loadDriveWeatherAndDistance(it) }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { mainViewModel.clearDriveWeather() }
+    }
 
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
@@ -322,6 +335,19 @@ fun DriveDetailScreen(
                             icon = Icons.Default.Group,
                             text = "${drive.maxVolunteers - drive.currentVolunteers} volunteer spots remaining"
                         )
+                    }
+
+                    driveDistance?.let { distKm ->
+                        item {
+                            DriveDetailRow(
+                                icon = Icons.Default.DirectionsCar,
+                                text = "%.1f km from Melbourne CBD".format(distKm)
+                            )
+                        }
+                    }
+
+                    driveWeather?.let { weather ->
+                        item { WeatherCard(weather = weather) }
                     }
 
                     item { Spacer(modifier = Modifier.height(16.dp)) }

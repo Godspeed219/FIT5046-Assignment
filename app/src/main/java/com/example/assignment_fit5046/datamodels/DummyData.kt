@@ -138,23 +138,6 @@ object DummyData {
         length = 75
     )
 
-    val WEATHER = WeatherResponse(
-        cityName = "Melbourne",
-        main = WeatherMain(temp = 22.0, feelsLike = 21.0, humidity = 60),
-        weather = listOf(
-            WeatherCondition(id = 800, main = "Clear", description = "clear sky", icon = "01d")
-        ),
-        wind = WeatherWind(speed = 12.0)
-    )
-
-    val GEOCODING = GeocodingResponse(
-        name = "Federation Square",
-        lat = -37.8179,
-        lon = 144.9691,
-        country = "AU",
-        state = "Victoria"
-    )
-
     val NGO_OWN_DRIVES = DRIVES.filter { it.ngoId == "n1" }
 
     val NGO_RECEIVED_APPLICATIONS = listOf(

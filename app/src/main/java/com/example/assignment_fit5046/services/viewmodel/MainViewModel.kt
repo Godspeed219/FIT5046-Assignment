@@ -12,7 +12,9 @@ import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
 import com.example.assignment_fit5046.datamodels.Quote
 import com.example.assignment_fit5046.datamodels.User
+import com.example.assignment_fit5046.datamodels.WeatherResponse
 import com.example.assignment_fit5046.services.local.AppDatabase
+import com.example.assignment_fit5046.services.remote.RetrofitClient
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
@@ -22,6 +24,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
@@ -75,6 +82,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _profileUpdateSuccess = MutableStateFlow(false)
     val profileUpdateSuccess: StateFlow<Boolean> = _profileUpdateSuccess.asStateFlow()
+
+    private val _driveWeather = MutableStateFlow<WeatherResponse?>(null)
+    val driveWeather: StateFlow<WeatherResponse?> = _driveWeather.asStateFlow()
+
+    private val _driveDistance = MutableStateFlow<Double?>(null)
+    val driveDistance: StateFlow<Double?> = _driveDistance.asStateFlow()
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -315,13 +328,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _errorMessage.value.toString(),
                     ) }
 
-                _quote.value = Quote(
-                    id = "static",
-                    content = "The best way to find yourself is to lose yourself in the service of others.",
-                    author = "Mahatma Gandhi",
-                    tags = emptyList(),
-                    length = 86
-                )
+                try {
+                    _quote.value = RetrofitClient.quotableApi.getRandomQuote()
+                } catch (_: Exception) {
+                    _quote.value = Quote(
+                        id = "static",
+                        content = "The best way to find yourself is to lose yourself in the service of others.",
+                        author = "Mahatma Gandhi",
+                        tags = emptyList(),
+                        length = 86
+                    )
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -576,6 +593,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _isRefreshing.value = false
             }
         }
+    }
+
+    fun loadDriveWeatherAndDistance(drive: Drive) {
+        viewModelScope.launch {
+            try {
+                val results = RetrofitClient.geocodingApi.geocode(drive.location)
+                val geo = results.firstOrNull() ?: return@launch
+                val lat = geo.lat.toDoubleOrNull() ?: return@launch
+                val lon = geo.lon.toDoubleOrNull() ?: return@launch
+                _driveWeather.value = RetrofitClient.weatherApi.getWeather(lat, lon)
+                _driveDistance.value = haversineKm(-37.8136, 144.9631, lat, lon)
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun clearDriveWeather() {
+        _driveWeather.value = null
+        _driveDistance.value = null
+    }
+
+    private fun haversineKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371.0
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val a = sin(dLat / 2).pow(2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(dLon / 2).pow(2)
+        return r * 2 * atan2(sqrt(a), sqrt(1 - a))
     }
 
     fun clearMessages() {

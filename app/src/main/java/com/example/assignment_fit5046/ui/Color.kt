@@ -51,7 +51,7 @@ val TextSecondary = Color(0xFF555555)
 val TextDisabled = Color(0xFF9E9E9E)
 
 // Status colors
-val StatusApproved = Color(0xFF2E7D32)
+val StatusApproved = Color(0xFF2196f3)
 val StatusPending = Color(0xFFE65100)
 val StatusRejected = Color(0xFFC62828)
 val StatusApprovedContainer = Color(0xFFE8F5E9)

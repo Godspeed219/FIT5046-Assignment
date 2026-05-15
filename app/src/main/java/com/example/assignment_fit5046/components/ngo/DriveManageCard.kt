@@ -78,7 +78,6 @@ fun DriveManageCard(
                     .padding(horizontal = 12.dp, vertical = 10.dp)
             ) {
 
-                // Row 1 — title + chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
