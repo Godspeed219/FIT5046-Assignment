@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.LottieEmptyState
@@ -55,7 +54,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.ui.platform.LocalContext
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.datamodels.Drive
+import androidx.core.content.edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +91,7 @@ fun ManageDrivesScreen(
         val now = System.currentTimeMillis()
         if (now - lastCheck > 86400000L) {
             currentUser?.uid?.let { mainViewModel.expirePassedDrives(it) }
-            prefs.edit().putLong("last_expire_check", now).apply()
+            prefs.edit { putLong("last_expire_check", now) }
         }
     }
 
@@ -132,11 +133,14 @@ fun ManageDrivesScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.CreateDrive.route) },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Create Drive")
+            if (!ngoDrives.isEmpty()) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(Screen.CreateDrive.route) },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Create Drive")
+                }
+
             }
         }
     ) { paddingValues ->
@@ -165,13 +169,13 @@ fun ManageDrivesScreen(
                     isRefreshing = isRefreshing,
                     onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDrives(it) } },
                     state = pullRefreshState,
-                    modifier = Modifier.weight(1f).padding(vertical = 18.dp)
+                    modifier = Modifier.weight(1f).padding(vertical = 38.dp)
                 ) {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         when {
                             ngoDrives.isEmpty() -> item {
                                 LottieEmptyState(
-                                    rawRes = R.raw.empty_search,
+                                    rawRes = R.raw.no_result,
                                     title = "No active drives",
                                     subtitle = "Create a drive to start finding volunteers",
                                     action = {
@@ -196,7 +200,7 @@ fun ManageDrivesScreen(
                                     )
                                 } else {
                                     LottieEmptyState(
-                                        rawRes = R.raw.empty_inbox,
+                                        rawRes = R.raw.empty_search,
                                         title = "No closed drives",
                                         subtitle = "Drives you close or that expire will appear here"
                                     )

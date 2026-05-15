@@ -173,7 +173,7 @@ fun NgoDashboardScreen(
                     if (!isLoading && ngoDrives.isEmpty()) {
                         item {
                             LottieEmptyState(
-                                rawRes = R.raw.empty_search,
+                                rawRes = R.raw.no_result,
                                 title = "No active drives",
                                 subtitle = "Post your first drive to start finding volunteers"
                             )

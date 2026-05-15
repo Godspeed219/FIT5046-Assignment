@@ -33,7 +33,9 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,10 +61,13 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
     val webClientId = stringResource(R.string.default_web_client_id)
 
+    val pendingGoogleUser by authViewModel.pendingGoogleUser.collectAsState()
+    val isGoogleMode = pendingGoogleUser != null
+
     var selectedRole by remember { mutableStateOf(UserRole.VOLUNTEER) }
 
     // Common fields
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(pendingGoogleUser?.name ?: "") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -81,14 +86,25 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
 
+    // Sync name when pendingGoogleUser arrives (e.g., after CredentialManager resolves)
+    LaunchedEffect(pendingGoogleUser) {
+        if (pendingGoogleUser != null && name.isEmpty()) {
+            name = pendingGoogleUser!!.name
+        }
+    }
+
     // Inline validation
     val passwordMismatch = confirmPassword.isNotEmpty() && password != confirmPassword
     val passwordTooShort = password.isNotEmpty() && password.length < 6
-    val canSubmit = !isLoading &&
+    val canSubmit = if (isGoogleMode) {
+        !isLoading
+    } else {
+        !isLoading &&
             email.isNotBlank() &&
             password.length >= 6 &&
             password == confirmPassword &&
             (if (selectedRole == UserRole.VOLUNTEER) name.isNotBlank() else ngoName.isNotBlank())
+    }
 
     Column(
         modifier = Modifier
@@ -133,21 +149,30 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Volunteer: Full Name
+        // Volunteer: Full Name (read-only and always visible in Google mode)
         AnimatedVisibility(
-            visible = selectedRole == UserRole.VOLUNTEER,
+            visible = selectedRole == UserRole.VOLUNTEER || isGoogleMode,
             enter = expandVertically(),
             exit = shrinkVertically()
         ) {
             Column {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it; authViewModel.clearError() },
+                    onValueChange = { if (!isGoogleMode) { name = it; authViewModel.clearError() } },
                     label = { Text("Full Name") },
                     singleLine = true,
-                    enabled = !isLoading,
+                    enabled = !isLoading && !isGoogleMode,
+                    readOnly = isGoogleMode,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (isGoogleMode && pendingGoogleUser != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Signed in as ${pendingGoogleUser!!.email}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
@@ -171,16 +196,18 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
         }
 
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it; authViewModel.clearError() },
-            label = { Text("Email") },
-            singleLine = true,
-            enabled = !isLoading,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (!isGoogleMode) {
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it; authViewModel.clearError() },
+                label = { Text("Email") },
+                singleLine = true,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         OutlinedTextField(
             value = phone,
@@ -233,51 +260,55 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
             }
         }
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it; authViewModel.clearError() },
-            label = { Text("Password") },
-            singleLine = true,
-            enabled = !isLoading,
-            isError = passwordTooShort,
-            supportingText = if (passwordTooShort) {
-                { Text("At least 6 characters") }
-            } else null,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = null
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (!isGoogleMode) {
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it; authViewModel.clearError() },
+                label = { Text("Password") },
+                singleLine = true,
+                enabled = !isLoading,
+                isError = passwordTooShort,
+                supportingText = if (passwordTooShort) {
+                    { Text("At least 6 characters") }
+                } else null,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it; authViewModel.clearError() },
-            label = { Text("Confirm Password") },
-            singleLine = true,
-            enabled = !isLoading,
-            isError = passwordMismatch,
-            supportingText = if (passwordMismatch) {
-                { Text("Passwords do not match") }
-            } else null,
-            visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { confirmVisible = !confirmVisible }) {
-                    Icon(
-                        imageVector = if (confirmVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = null
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it; authViewModel.clearError() },
+                label = { Text("Confirm Password") },
+                singleLine = true,
+                enabled = !isLoading,
+                isError = passwordMismatch,
+                supportingText = if (passwordMismatch) {
+                    { Text("Passwords do not match") }
+                } else null,
+                visualTransformation = if (confirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { confirmVisible = !confirmVisible }) {
+                        Icon(
+                            imageVector = if (confirmVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        } // end if (!isGoogleMode)
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -292,73 +323,99 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
 
         Button(
             onClick = {
-                authViewModel.register(
-                    email = email.trim(),
-                    password = password,
-                    name = if (selectedRole == UserRole.VOLUNTEER) name.trim() else ngoName.trim(),
-                    role = selectedRole,
-                    phoneNumber = phone.trim(),
-                    bio = bio.trim(),
-                    ngoName = ngoName.trim(),
-                    ngoDescription = ngoDescription.trim()
-                )
+                if (isGoogleMode) {
+                    authViewModel.completeGoogleRegistration(selectedRole)
+                } else {
+                    authViewModel.register(
+                        email = email.trim(),
+                        password = password,
+                        name = if (selectedRole == UserRole.VOLUNTEER) name.trim() else ngoName.trim(),
+                        role = selectedRole,
+                        phoneNumber = phone.trim(),
+                        bio = bio.trim(),
+                        ngoName = ngoName.trim(),
+                        ngoDescription = ngoDescription.trim()
+                    )
+                }
             },
             enabled = canSubmit,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(if (isLoading) "Creating account..." else "Create Account")
+            Text(
+                when {
+                    isLoading -> "Please wait..."
+                    isGoogleMode -> "Continue with Google"
+                    else -> "Create Account"
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Already have an account? ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "Login",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { navController.popBackStack() }
-            )
-        }
+        if (isGoogleMode) {
+            TextButton(
+                onClick = {
+                    authViewModel.clearPendingGoogleUser()
+                    navController.popBackStack()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Use a different account",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Already have an account? ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Login",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { navController.popBackStack() }
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HorizontalDivider(modifier = Modifier.weight(1f))
-            Text(
-                text = "or",
-                modifier = Modifier.padding(horizontal = 12.dp),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            HorizontalDivider(modifier = Modifier.weight(1f))
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f))
+                Text(
+                    text = "or",
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f))
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(
-            onClick = { authViewModel.signInWithGoogle(context, webClientId) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.google_signin),
-                contentDescription = "Google",
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text("Continue with Google", style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(
+                onClick = { authViewModel.signInWithGoogle(context, webClientId) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.google_signin),
+                    contentDescription = "Google",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Continue with Google", style = MaterialTheme.typography.bodyMedium)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

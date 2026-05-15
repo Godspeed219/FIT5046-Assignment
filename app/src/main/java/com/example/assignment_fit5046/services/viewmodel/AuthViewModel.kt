@@ -11,6 +11,7 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.assignment_fit5046.datamodels.User
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.remote.firebase.FirebaseService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
 import com.example.assignment_fit5046.services.local.AppDatabase
@@ -28,12 +29,17 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
+data class PendingGoogleUser(val uid: String, val email: String, val name: String)
+
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userDao = AppDatabase.getInstance(application).userDao()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
+
+    private val _pendingGoogleUser = MutableStateFlow<PendingGoogleUser?>(null)
+    val pendingGoogleUser: StateFlow<PendingGoogleUser?> = _pendingGoogleUser.asStateFlow()
 
     init {
         viewModelScope.launch { checkAuthState() }
@@ -142,6 +148,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _authState.value = AuthState.LoggedIn(user)
     }
 
+    fun clearPendingGoogleUser() {
+        _pendingGoogleUser.value = null
+    }
+
     fun signInWithGoogle(context: Context, webClientId: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -149,7 +159,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val credential = try {
                     val option = GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
+                        .setFilterByAuthorizedAccounts(true)
                         .setServerClientId(webClientId)
                         .setAutoSelectEnabled(true)
                         .build()
@@ -173,15 +183,25 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 ) {
                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                     val idToken = googleIdTokenCredential.idToken
-                    val userResult = UserService.signInWithGoogle(idToken)
-                    if (userResult.isSuccess) {
-                        val user = userResult.getOrThrow()
-                        userDao.insertUser(user)
-                        _authState.value = AuthState.LoggedIn(user)
-                    } else {
+                    val checkResult = UserService.checkGoogleUser(idToken)
+                    if (checkResult.isFailure) {
                         _authState.value = AuthState.Error(
-                            userResult.exceptionOrNull()?.message ?: "Google Sign-In failed"
+                            checkResult.exceptionOrNull()?.message ?: "Google Sign-In failed"
                         )
+                    } else {
+                        val existingUser = checkResult.getOrNull()
+                        if (existingUser != null) {
+                            userDao.insertUser(existingUser)
+                            _authState.value = AuthState.LoggedIn(existingUser)
+                        } else {
+                            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                            _pendingGoogleUser.value = PendingGoogleUser(
+                                uid = firebaseUser?.uid ?: "",
+                                email = firebaseUser?.email ?: "",
+                                name = firebaseUser?.displayName ?: ""
+                            )
+                            _authState.value = AuthState.LoggedOut
+                        }
                     }
                 } else {
                     _authState.value = AuthState.Error("Unexpected credential type")
@@ -190,6 +210,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = AuthState.Error("Sign-in cancelled")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
+            }
+        }
+    }
+
+    fun completeGoogleRegistration(role: UserRole) {
+        viewModelScope.launch {
+            val pending = _pendingGoogleUser.value ?: return@launch
+            _authState.value = AuthState.Loading
+            val result = UserService.registerGoogleUser(
+                uid = pending.uid,
+                email = pending.email,
+                name = pending.name,
+                role = role
+            )
+            if (result.isSuccess) {
+                val user = result.getOrThrow()
+                userDao.insertUser(user)
+                _pendingGoogleUser.value = null
+                _authState.value = AuthState.LoggedIn(user)
+            } else {
+                _authState.value = AuthState.Error(
+                    result.exceptionOrNull()?.message ?: "Registration failed"
+                )
             }
         }
     }

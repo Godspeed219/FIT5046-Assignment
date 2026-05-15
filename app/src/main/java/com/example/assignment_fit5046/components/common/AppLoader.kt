@@ -38,7 +38,7 @@ fun AppLoader(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f)),
+                .background(Color.White),
             contentAlignment = Alignment.Center
         ) {
             LottieAnimation(

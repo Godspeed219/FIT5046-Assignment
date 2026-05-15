@@ -74,7 +74,7 @@ object UserService {
         auth.sendPasswordResetEmail(email).await()
     }
 
-    suspend fun signInWithGoogle(idToken: String): Result<User> {
+    suspend fun checkGoogleUser(idToken: String): Result<User?> {
         return try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             val authResult = auth.signInWithCredential(credential).await()
@@ -82,23 +82,35 @@ object UserService {
             val uid = firebaseUser.uid
             val snapshot = firestore.collection(USERS_COLLECTION).document(uid).get().await()
             if (snapshot.exists()) {
-                val user = snapshot.toObject(User::class.java)!!
-                Result.success(user)
+                Result.success(snapshot.toObject(User::class.java)!!)
             } else {
-                val user = User(
-                    uid = uid,
-                    email = firebaseUser.email ?: "",
-                    name = firebaseUser.displayName ?: "",
-                    role = UserRole.VOLUNTEER,
-                    phoneNumber = "",
-                    bio = "",
-                    profileImageUrl = "",
-                    ngoName = "",
-                    ngoDescription = ""
-                )
-                firestore.collection(USERS_COLLECTION).document(uid).set(user).await()
-                Result.success(user)
+                Result.success(null)
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun registerGoogleUser(
+        uid: String,
+        email: String,
+        name: String,
+        role: UserRole
+    ): Result<User> {
+        return try {
+            val user = User(
+                uid = uid,
+                email = email,
+                name = name,
+                role = role,
+                phoneNumber = "",
+                bio = "",
+                profileImageUrl = "",
+                ngoName = if (role == UserRole.NGO) name else "",
+                ngoDescription = ""
+            )
+            firestore.collection(USERS_COLLECTION).document(uid).set(user).await()
+            Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -43,6 +43,7 @@ import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import com.example.assignment_fit5046.services.viewmodel.PendingGoogleUser
 
 sealed class Screen(val route: String) {
     object Login : Screen("login")
@@ -72,6 +73,7 @@ fun AppNavigation(
     onRoleChanged: (UserRole) -> Unit = {}
 ) {
     val authState by authViewModel.authState.collectAsState()
+    val pendingGoogleUser by authViewModel.pendingGoogleUser.collectAsState()
 
     // Block NavHost until Firebase auth check resolves — prevents login screen flash on relaunch
     if (authState is AuthState.Loading) {
@@ -110,7 +112,7 @@ fun AppNavigation(
     )
 
     // Central auth-driven navigation
-    LaunchedEffect(authState) {
+    LaunchedEffect(authState, pendingGoogleUser) {
         when (val state = authState) {
             is AuthState.LoggedIn -> {
                 currentRole = state.user.role
@@ -123,8 +125,14 @@ fun AppNavigation(
             }
             is AuthState.LoggedOut -> {
                 currentRole = null
-                navController.navigate(Screen.Login.route) {
-                    popUpTo(0) { inclusive = true }
+                if (pendingGoogleUser != null) {
+                    navController.navigate(Screen.Register.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                } else {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             }
             else -> {}
