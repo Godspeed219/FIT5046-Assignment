@@ -1,13 +1,21 @@
 package com.example.assignment_fit5046.services.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
+import androidx.credentials.ClearCredentialStateRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.assignment_fit5046.datamodels.User
 import com.example.assignment_fit5046.services.remote.firebase.FirebaseService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
 import com.example.assignment_fit5046.services.local.AppDatabase
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -116,6 +124,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             UserService.logoutUser()
             userDao.clearUser()
+            try {
+                CredentialManager.create(getApplication<Application>())
+                    .clearCredentialState(ClearCredentialStateRequest())
+            } catch (_: Exception) {}
             _authState.value = AuthState.LoggedOut
         }
     }
@@ -128,5 +140,57 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateCurrentUser(user: User) {
         _authState.value = AuthState.LoggedIn(user)
+    }
+
+    fun signInWithGoogle(context: Context, webClientId: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val credentialManager = CredentialManager.create(context)
+            try {
+                val credential = try {
+                    val option = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(webClientId)
+                        .setAutoSelectEnabled(true)
+                        .build()
+                    val request = GetCredentialRequest.Builder()
+                        .addCredentialOption(option)
+                        .build()
+                    credentialManager.getCredential(context, request).credential
+                } catch (_: Exception) {
+                    val option = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId(webClientId)
+                        .build()
+                    val request = GetCredentialRequest.Builder()
+                        .addCredentialOption(option)
+                        .build()
+                    credentialManager.getCredential(context, request).credential
+                }
+
+                if (credential is CustomCredential &&
+                    credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
+                ) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    val idToken = googleIdTokenCredential.idToken
+                    val userResult = UserService.signInWithGoogle(idToken)
+                    if (userResult.isSuccess) {
+                        val user = userResult.getOrThrow()
+                        userDao.insertUser(user)
+                        _authState.value = AuthState.LoggedIn(user)
+                    } else {
+                        _authState.value = AuthState.Error(
+                            userResult.exceptionOrNull()?.message ?: "Google Sign-In failed"
+                        )
+                    }
+                } else {
+                    _authState.value = AuthState.Error("Unexpected credential type")
+                }
+            } catch (e: GetCredentialCancellationException) {
+                _authState.value = AuthState.Error("Sign-in cancelled")
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
+            }
+        }
     }
 }

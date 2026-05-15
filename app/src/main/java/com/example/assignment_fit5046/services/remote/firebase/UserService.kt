@@ -6,6 +6,7 @@ import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.U
 import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.auth
 import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.currentUserId
 import com.example.assignment_fit5046.services.remote.firebase.FirebaseService.firestore
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
@@ -71,5 +72,35 @@ object UserService {
 
     suspend fun sendPasswordReset(email: String): Result<Unit> = runCatching {
         auth.sendPasswordResetEmail(email).await()
+    }
+
+    suspend fun signInWithGoogle(idToken: String): Result<User> {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val authResult = auth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user ?: throw Exception("No Firebase user")
+            val uid = firebaseUser.uid
+            val snapshot = firestore.collection(USERS_COLLECTION).document(uid).get().await()
+            if (snapshot.exists()) {
+                val user = snapshot.toObject(User::class.java)!!
+                Result.success(user)
+            } else {
+                val user = User(
+                    uid = uid,
+                    email = firebaseUser.email ?: "",
+                    name = firebaseUser.displayName ?: "",
+                    role = UserRole.VOLUNTEER,
+                    phoneNumber = "",
+                    bio = "",
+                    profileImageUrl = "",
+                    ngoName = "",
+                    ngoDescription = ""
+                )
+                firestore.collection(USERS_COLLECTION).document(uid).set(user).await()
+                Result.success(user)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

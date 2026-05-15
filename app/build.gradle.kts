@@ -90,6 +90,8 @@ dependencies {
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.7.1")
 
-    // Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:21.5.0")
+    // Credential Manager (Google Sign-In)
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.2.0")
 }

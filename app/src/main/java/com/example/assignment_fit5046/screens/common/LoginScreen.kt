@@ -1,28 +1,32 @@
 package com.example.assignment_fit5046.screens.common
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,7 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -41,69 +47,46 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.Screen
-import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.ui.isNgoTheme
 
 @Composable
 fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    // Animation-only role toggle — does not affect auth logic
-    var selectedRole by remember { mutableStateOf(UserRole.VOLUNTEER) }
+
+    val context = LocalContext.current
+    val webClientId = stringResource(R.string.default_web_client_id)
 
     val authState by authViewModel.authState.collectAsState()
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
 
-    val animRes = if (selectedRole == UserRole.NGO) R.raw.login_ngo else R.raw.login_volunteer
+    // Detect which theme is active by checking the primary color
+    // NGO theme uses blue, Volunteer theme uses green
+    // isNgoTheme() is a helper that checks MaterialTheme.colorScheme.primary
+    val isNgo = isNgoTheme()
+    val animRes = if (isNgo) R.raw.login_ngo else R.raw.login_volunteer
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animRes))
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+            .padding(horizontal = 24.dp).padding(top = 30.dp),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Role selector — switches animation only, no auth impact
-        Row(horizontalArrangement = Arrangement.Center) {
-            TextButton(
-                onClick = { selectedRole = UserRole.VOLUNTEER }
-            ) {
-                Text(
-                    text = "Volunteer",
-                    fontWeight = if (selectedRole == UserRole.VOLUNTEER) FontWeight.Bold else FontWeight.Normal,
-                    color = if (selectedRole == UserRole.VOLUNTEER)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            TextButton(
-                onClick = { selectedRole = UserRole.NGO }
-            ) {
-                Text(
-                    text = "NGO",
-                    fontWeight = if (selectedRole == UserRole.NGO) FontWeight.Bold else FontWeight.Normal,
-                    color = if (selectedRole == UserRole.NGO)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        // Header animation — plays once and holds on last frame
         LottieAnimation(
             composition = composition,
             iterations = 1,
-            modifier = Modifier.size(160.dp)
+            modifier = Modifier
+                .size(250.dp)
+                .offset(y = 20.dp),
+            clipToCompositionBounds = true
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "VolunteerLink",
@@ -111,7 +94,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         OutlinedTextField(
             value = email,
@@ -125,7 +108,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = password,
@@ -147,7 +130,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
             text = "Forgot Password?",
@@ -158,7 +141,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
                 .clickable { /* TODO: password reset */ }
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         if (errorMessage != null) {
             Text(
@@ -177,7 +160,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             Text(if (isLoading) "Logging in..." else "Login")
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Don't have an account? Register",
@@ -185,5 +168,40 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable { navController.navigate(Screen.Register.route) }
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HorizontalDivider(modifier = Modifier.weight(1f))
+            Text(
+                text = "or",
+                modifier = Modifier.padding(horizontal = 12.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedButton(
+            onClick = { authViewModel.signInWithGoogle(context, webClientId) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading,
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.google_signin),
+                contentDescription = "Google",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text("Continue with Google", style = MaterialTheme.typography.bodyMedium)
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

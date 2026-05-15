@@ -62,3 +62,10 @@ fun AppTheme(
         content = content
     )
 }
+
+@Composable
+fun isNgoTheme(): Boolean {
+    // NGO primary is blue, Volunteer primary is green
+    // Compare against the NGO primary color defined in Color.kt
+    return MaterialTheme.colorScheme.primary == NgoColorScheme.primary
+}
