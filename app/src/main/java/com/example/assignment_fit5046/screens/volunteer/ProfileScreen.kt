@@ -3,6 +3,7 @@ package com.example.assignment_fit5046.screens.volunteer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,6 +42,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -56,10 +58,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.ProfileHeaderCard
 import com.example.assignment_fit5046.components.common.Screen
+import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
@@ -128,13 +133,11 @@ fun ProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Profile") },
-                actions = {
-                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
-                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                        }
-                    }
-                }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
             )
         }
     ) { innerPadding ->
@@ -154,68 +157,21 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(bottom = 32.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 48.dp, bottom = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(modifier = Modifier.size(96.dp)) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
+            val myApplications by mainViewModel.volunteerApplications.collectAsState()
+            val approvedCount = myApplications.count { it.status == ApplicationStatus.APPROVED }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = currentUser?.name ?: "Volunteer",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = currentUser?.email ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                    )
-
-                    if (!currentUser?.bio.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = currentUser!!.bio,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 32.dp)
-                        )
-                    }
-                }
+            currentUser?.let { user ->
+                ProfileHeaderCard(
+                    user = user,
+                    role = UserRole.VOLUNTEER,
+                    statOneLabel = "Applications",
+                    statOneValue = "${myApplications.size}",
+                    statTwoLabel = "Approved",
+                    statTwoValue = "$approvedCount",
+                    modifier = Modifier.padding(top = 16.dp)
+                )
             }
-
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
             Column(modifier = Modifier.fillMaxWidth()) {
 
                 ProfileMenuItem(

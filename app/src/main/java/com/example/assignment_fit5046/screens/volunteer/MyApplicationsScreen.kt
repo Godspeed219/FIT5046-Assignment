@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.graphics.Color
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.LottieEmptyState
@@ -125,13 +127,11 @@ fun MyApplicationsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("My Applications") },
-                actions = {
-                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
-                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                        }
-                    }
-                }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
             )
         }
     ) { paddingValues ->
@@ -159,8 +159,51 @@ fun MyApplicationsScreen(
                                 application = application,
                                 onWithdraw = { pendingWithdraw = application }
                             )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
+                            ApplicationCard(
+                                application = application,
+                                onWithdraw = { pendingWithdraw = application }
+                            )
                         }
-                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        item {
+                            Spacer(modifier = Modifier.height(88.dp))
+                        }
+
                     }
                 }
             }

@@ -208,15 +208,14 @@ fun DriveDetailScreen(
             if (drive != null) {
                 Surface(shadowElevation = 8.dp, tonalElevation = 2.dp) {
                     Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                        val appStatus = existingApplication?.status
-                        when {
-                            appStatus == null || appStatus == ApplicationStatus.WITHDRAWN -> {
+                        when (val appStatus = existingApplication?.status) {
+                            null, ApplicationStatus.WITHDRAWN -> {
                                 Button(
                                     onClick = { showApplyDialog = true },
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text("Apply Now") }
                             }
-                            appStatus == ApplicationStatus.PENDING -> {
+                            ApplicationStatus.PENDING -> {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically

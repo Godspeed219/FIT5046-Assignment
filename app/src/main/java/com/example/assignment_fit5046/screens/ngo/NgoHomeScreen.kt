@@ -32,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import androidx.core.content.edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +106,7 @@ fun NgoDashboardScreen(
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 )
             )
-            prefs.edit().putBoolean("permissions_requested", true).apply()
+            prefs.edit { putBoolean("permissions_requested", true) }
         }
     }
 
@@ -126,7 +129,12 @@ fun NgoDashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dashboard") },
+                title = { Text("Welcome !") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
                 actions = {
                     BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
                         IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
@@ -150,12 +158,7 @@ fun NgoDashboardScreen(
             ) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     item {
-                        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                            Text(
-                                text = "Welcome back,",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                             Text(
                                 text = currentUser?.name ?: "",
                                 style = MaterialTheme.typography.headlineSmall,
@@ -163,6 +166,8 @@ fun NgoDashboardScreen(
                             )
                         }
                     }
+
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
 
                     item {
                         Row(
@@ -231,7 +236,9 @@ fun NgoDashboardScreen(
                         }
                     }
 
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        Spacer(modifier = Modifier.height(88.dp))
+                    }
                 }
             }
 

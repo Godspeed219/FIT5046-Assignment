@@ -1,6 +1,7 @@
 package com.example.assignment_fit5046.screens.volunteer
 
 import android.Manifest
+import android.R.attr.singleLine
 import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,11 +12,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +28,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,6 +40,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -46,11 +50,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.R
@@ -64,6 +67,7 @@ import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import androidx.core.content.edit
 
 private val CAUSE_FILTERS = listOf(
     "All", "Environment", "Education", "Health", "Animal Welfare", "Community"
@@ -95,11 +99,11 @@ fun HomeScreen(
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { /* granted or denied — no action needed, fail silently */ }
+    ) { }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* granted or denied — no action needed, fail silently */ }
+    ) { }
 
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("volunteerlink_prefs", Context.MODE_PRIVATE)
@@ -113,7 +117,7 @@ fun HomeScreen(
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 )
             )
-            prefs.edit().putBoolean("permissions_requested", true).apply()
+            prefs.edit { putBoolean("permissions_requested", true) }
         }
     }
 
@@ -139,7 +143,12 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("VolunteerLink") },
+                title = { Text("Welcome !") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
                 actions = {
                     BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
                         IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
@@ -147,6 +156,7 @@ fun HomeScreen(
                         }
                     }
                 }
+
             )
         }
     ) { paddingValues ->
@@ -162,16 +172,10 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // Welcome header
                     item {
                         Column(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         ) {
-                            Text(
-                                text = "Welcome back,",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                             Text(
                                 text = currentUser?.name ?: "Volunteer",
                                 style = MaterialTheme.typography.headlineMedium,
@@ -186,6 +190,9 @@ fun HomeScreen(
                         quote?.let { QuoteCard(quote = it) }
                     }
 
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                     // Search field
                     item {
                         OutlinedTextField(
@@ -193,8 +200,8 @@ fun HomeScreen(
                             onValueChange = { searchQuery = it },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            placeholder = { Text("Search drives or organisations...") },
+                                .padding(horizontal = 16.dp),
+                            placeholder = { Text("Search Drives or NGOs ...") },
                             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
@@ -273,7 +280,10 @@ fun HomeScreen(
                         )
                     }
 
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                    item {
+                        Spacer(modifier = Modifier.height(88.dp))
+                    }
+
                 }
             }
 

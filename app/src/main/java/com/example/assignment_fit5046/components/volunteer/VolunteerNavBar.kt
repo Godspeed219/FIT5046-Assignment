@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -25,7 +26,10 @@ fun VolunteerNavBar(navController: NavController) {
         Triple("Profile", Screen.VolunteerProfile.route, Icons.Default.Person)
     )
 
-    NavigationBar {
+    NavigationBar (
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
         items.forEach { (label, route, icon) ->
             NavigationBarItem(
                 selected = currentRoute == route,

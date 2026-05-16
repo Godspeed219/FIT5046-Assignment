@@ -1,32 +1,31 @@
 package com.example.assignment_fit5046.screens.ngo
 
-import androidx.compose.foundation.Image
+import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
+import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -37,31 +36,25 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.navigation.NavController
+import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.LottieEmptyState
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.ngo.DriveManageCard
+import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
-import android.content.Context
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.ui.platform.LocalContext
-import com.example.assignment_fit5046.R
-import com.example.assignment_fit5046.datamodels.Drive
-import androidx.core.content.edit
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -141,20 +134,19 @@ fun ManageDrivesScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Manage Drives") },
-                actions = {
-                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
-                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                        }
-                    }
-                }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
             )
         },
         floatingActionButton = {
             if (!ngoDrives.isEmpty()) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.CreateDrive.route) },
-                    containerColor = MaterialTheme.colorScheme.primary
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 80.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Create Drive")
                 }
@@ -187,7 +179,9 @@ fun ManageDrivesScreen(
                     isRefreshing = isRefreshing,
                     onRefresh = { currentUser?.uid?.let { mainViewModel.refreshNgoDrives(it) } },
                     state = pullRefreshState,
-                    modifier = Modifier.weight(1f).padding(vertical = 38.dp)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 8.dp)
                 ) {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         when {
@@ -243,7 +237,9 @@ fun ManageDrivesScreen(
                             }
                         }
 
-                        item { Spacer(modifier = Modifier.height(16.dp)) }
+                        item {
+                            Spacer(modifier = Modifier.height(88.dp))
+                        }
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.example.assignment_fit5046.components.common
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -12,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -77,7 +79,6 @@ fun AppNavigation(
     val authState by authViewModel.authState.collectAsState()
     val pendingGoogleUser by authViewModel.pendingGoogleUser.collectAsState()
 
-    // Block NavHost until Firebase auth check resolves — prevents login screen flash on relaunch
     if (authState is AuthState.Loading) {
         Box(modifier = Modifier.fillMaxSize()) {
             AppLoader(isLoading = true, role = UserRole.VOLUNTEER)
@@ -88,14 +89,12 @@ fun AppNavigation(
     val navController = rememberNavController()
     val mainViewModel: MainViewModel = viewModel()
 
-    // Derive start destination from resolved auth state so no login flash for logged-in users
     val startDestination = when (val s = authState) {
         is AuthState.LoggedIn -> if (s.user.role == UserRole.VOLUNTEER)
             Screen.VolunteerHome.route else Screen.NgoDashboard.route
         else -> Screen.Login.route
     }
 
-    // Initialise currentRole from resolved auth state to avoid first-frame missing bottom nav
     var currentRole by remember { mutableStateOf((authState as? AuthState.LoggedIn)?.user?.role) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -113,7 +112,6 @@ fun AppNavigation(
         Screen.NgoProfile.route
     )
 
-    // Central auth-driven navigation
     LaunchedEffect(authState, pendingGoogleUser) {
         when (val state = authState) {
             is AuthState.LoggedIn -> {
@@ -141,8 +139,6 @@ fun AppNavigation(
         }
     }
 
-    val onSignOut: () -> Unit = { authViewModel.signOut() }
-
     Scaffold(
         bottomBar = {
             when (currentRole) {
@@ -155,7 +151,6 @@ fun AppNavigation(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             composable(Screen.Login.route) {
                 LoginScreen(navController = navController, authViewModel = authViewModel)

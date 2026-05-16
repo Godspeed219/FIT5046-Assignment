@@ -40,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.ProfileHeaderCard
 import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
@@ -114,13 +116,11 @@ fun NgoProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Profile") },
-                actions = {
-                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
-                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
-                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                        }
-                    }
-                }
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = Color.Black,
+                    actionIconContentColor = MaterialTheme.colorScheme.primary,
+                ),
             )
         }
     ) { innerPadding ->
@@ -135,69 +135,23 @@ fun NgoProfileScreen(
             .verticalScroll(rememberScrollState())
     ) {
         // Section 1 — Profile Card
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(bottom = 32.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 48.dp, bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(modifier = Modifier.size(96.dp)) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Business,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
+        val ngoDrives by mainViewModel.ngoDrives.collectAsState()
+        val ngoApplications by mainViewModel.ngoApplications.collectAsState()
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = currentUser?.name ?: "Organisation",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = currentUser?.email ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-                )
-
-                if (!currentUser?.bio.isNullOrEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = currentUser.bio,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
-                    )
-                }
-            }
+        currentUser?.let { user ->
+            ProfileHeaderCard(
+                user = user,
+                role = UserRole.NGO,
+                statOneLabel = "Drives",
+                statOneValue = "${ngoDrives.size}",
+                statTwoLabel = "Applicants",
+                statTwoValue = "${ngoApplications.size}",
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
 
-        // Section 2 — Menu List
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
+
         Column(modifier = Modifier.fillMaxWidth()) {
 
             ProfileMenuItem(
