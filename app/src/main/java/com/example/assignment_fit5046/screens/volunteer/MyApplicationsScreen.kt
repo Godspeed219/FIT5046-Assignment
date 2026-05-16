@@ -17,13 +17,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -48,6 +52,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.LottieEmptyState
+import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
@@ -84,6 +89,7 @@ fun MyApplicationsScreen(
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var pendingWithdraw by remember { mutableStateOf<Application?>(null) }
     val pullRefreshState = rememberPullToRefreshState()
+    val unreadCount by mainViewModel.unreadCount.collectAsState()
 
     LaunchedEffect(errorMessage, successMessage) {
         val msg = errorMessage ?: successMessage
@@ -116,7 +122,18 @@ fun MyApplicationsScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("My Applications") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("My Applications") },
+                actions = {
+                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
+                    }
+                }
+            )
+        }
     ) { paddingValues ->
         Box(
             modifier = Modifier

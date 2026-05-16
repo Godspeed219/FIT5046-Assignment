@@ -19,10 +19,13 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.VolunteerActivism
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.assignment_fit5046.components.common.AppToast
+import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.volunteer.WeatherCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
@@ -88,6 +92,7 @@ fun DriveDetailScreen(
     val successMessage by mainViewModel.successMessage.collectAsState()
     val driveWeather by mainViewModel.driveWeather.collectAsState()
     val driveDistance by mainViewModel.driveDistance.collectAsState()
+    val unreadCount by mainViewModel.unreadCount.collectAsState()
 
     val drive = allActiveDrives.find { it.driveId == driveId }
     val existingApplication = volunteerApplications.find { it.driveId == driveId }
@@ -188,6 +193,13 @@ fun DriveDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
                     }
                 }
             )

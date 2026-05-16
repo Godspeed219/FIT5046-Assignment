@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -27,6 +28,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -54,6 +57,7 @@ import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.LottieEmptyState
+import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.datamodels.Application
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
@@ -83,6 +87,7 @@ fun DriveApplicationsScreen(
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var pendingAction by remember { mutableStateOf<Pair<Application, ApplicationStatus>?>(null) }
     val pullRefreshState = rememberPullToRefreshState()
+    val unreadCount by mainViewModel.unreadCount.collectAsState()
 
     LaunchedEffect(driveId) {
         mainViewModel.loadDriveApplications(driveId)
@@ -145,6 +150,13 @@ fun DriveApplicationsScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
                     }
                 }
             )

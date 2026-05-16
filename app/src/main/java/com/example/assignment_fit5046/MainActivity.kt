@@ -12,17 +12,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.assignment_fit5046.components.common.AppNavigation
+import com.example.assignment_fit5046.components.common.NotificationHelper
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.services.viewmodel.MainViewModel
 import com.example.assignment_fit5046.ui.AppTheme
 
 class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels()
+    private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NotificationHelper.createNotificationChannels(this)
         enableEdgeToEdge()
         setContent {
             var currentRole by remember { mutableStateOf(UserRole.VOLUNTEER) }
@@ -32,6 +36,9 @@ class MainActivity : ComponentActivity() {
                 val state = authState
                 if (state is AuthState.LoggedIn) {
                     authViewModel.registerFcmToken(state.user.uid)
+                    mainViewModel.startNotificationListener(state.user.uid)
+                } else if (state is AuthState.LoggedOut) {
+                    mainViewModel.stopNotificationListener()
                 }
             }
 
@@ -43,4 +50,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }

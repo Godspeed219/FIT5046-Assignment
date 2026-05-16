@@ -27,7 +27,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -119,6 +122,7 @@ fun CreateDriveScreen(
     val isLoading by mainViewModel.isLoading.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
+    val unreadCount by mainViewModel.unreadCount.collectAsState()
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -210,6 +214,13 @@ fun CreateDriveScreen(
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    BadgedBox(badge = { if (unreadCount > 0) Badge { Text("$unreadCount") } }) {
+                        IconButton(onClick = { navController.navigate(Screen.Notifications.route) }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
                     }
                 }
             )

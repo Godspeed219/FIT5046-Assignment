@@ -23,6 +23,7 @@ import com.example.assignment_fit5046.components.ngo.NgoNavBar
 import com.example.assignment_fit5046.components.volunteer.VolunteerNavBar
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.screens.common.LoginScreen
+import com.example.assignment_fit5046.screens.common.NotificationsScreen
 import com.example.assignment_fit5046.screens.common.RegisterScreen
 import com.example.assignment_fit5046.screens.company.AboutUsScreen
 import com.example.assignment_fit5046.screens.company.ContactUsScreen
@@ -65,6 +66,7 @@ sealed class Screen(val route: String) {
     object AboutUs : Screen("about_us")
     object ContactUs : Screen("contact_us")
     object TermsConditions : Screen("terms_conditions")
+    object Notifications : Screen("notifications")
 }
 
 @Composable
@@ -228,7 +230,8 @@ fun AppNavigation(
             composable(Screen.NgoProfile.route) {
                 NgoProfileScreen(
                     navController = navController,
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
                 )
             }
             composable(
@@ -267,6 +270,13 @@ fun AppNavigation(
             }
             composable(Screen.TermsConditions.route) {
                 TermsConditionsScreen(navController = navController)
+            }
+            composable(Screen.Notifications.route) {
+                NotificationsScreen(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
             }
         }
     }

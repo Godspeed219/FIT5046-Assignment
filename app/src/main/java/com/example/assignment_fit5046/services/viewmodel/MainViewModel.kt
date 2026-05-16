@@ -6,18 +6,24 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.assignment_fit5046.datamodels.AppNotification
 import com.example.assignment_fit5046.datamodels.Application as VolunteerApplication
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.PendingAlarm
 import com.example.assignment_fit5046.datamodels.Quote
 import com.example.assignment_fit5046.datamodels.User
+import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.datamodels.WeatherResponse
+import com.example.assignment_fit5046.services.AlarmScheduler
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.RetrofitClient
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
 import com.example.assignment_fit5046.services.remote.firebase.DriveService
+import com.example.assignment_fit5046.services.remote.firebase.NotificationService
 import com.example.assignment_fit5046.services.remote.firebase.UserService
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +49,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val driveDao = AppDatabase.getInstance(application).driveDao()
     private val applicationDao = AppDatabase.getInstance(application).applicationDao()
     private val userDao = AppDatabase.getInstance(application).userDao()
+    private val pendingAlarmDao = AppDatabase.getInstance(application).pendingAlarmDao()
+
+    private var notificationListener: ListenerRegistration? = null
+
+    private val _notifications = MutableStateFlow<List<AppNotification>>(emptyList())
+    val notifications: StateFlow<List<AppNotification>> = _notifications.asStateFlow()
+
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
 
     private val _ngoDrives = MutableStateFlow<List<Drive>>(emptyList())
     val ngoDrives: StateFlow<List<Drive>> = _ngoDrives.asStateFlow()
@@ -177,8 +192,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _ngoDrives.value = _ngoDrives.value.map { drive ->
                         if (drive.driveId == driveId) drive.copy(status = DriveStatus.CLOSED) else drive
                     }
-                    _ngoDrives.value.find { it.driveId == driveId }?.let { driveDao.insertDrive(it) }
+                    val closedDrive = _ngoDrives.value.find { it.driveId == driveId }
+                    closedDrive?.let { driveDao.insertDrive(it) }
                     _successMessage.value = "Drive closed"
+
+                    val driveName = closedDrive?.title ?: driveId
+                    val affectedApps = _ngoApplications.value.filter {
+                        it.driveId == driveId &&
+                            (it.status == ApplicationStatus.PENDING || it.status == ApplicationStatus.APPROVED)
+                    }
+                    affectedApps.forEach { app ->
+                        sendNotification(
+                            AppNotification(
+                                recipientUid = app.volunteerId,
+                                recipientRole = UserRole.VOLUNTEER.name,
+                                type = AppNotification.TYPE_DRIVE_CLOSED,
+                                title = "Drive Closed",
+                                message = "\"$driveName\" has been closed by the organiser.",
+                                driveId = driveId,
+                                driveName = driveName,
+                                read = false,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        )
+                        val alarmId = "drive_${driveId}_${app.volunteerId}"
+                        launch(Dispatchers.IO) {
+                            try {
+                                AlarmScheduler.cancel(getApplication(), alarmId)
+                                pendingAlarmDao.deleteAlarm(alarmId)
+                            } catch (_: Exception) {}
+                        }
+                    }
                 }
                 .onFailure { _errorMessage.value = it.message; Log.e("FAILURE QUERY", _errorMessage.value.toString()) }
         }
@@ -225,6 +269,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         ApplicationStatus.PENDING -> "Application set to pending"
                         else -> {""}
                     } as String?
+
+                    val app = _ngoApplications.value.find { it.applicationId == applicationId }
+                    val drive = _ngoDrives.value.find { it.driveId == driveId }
+                    if (app != null && drive != null) {
+                        val (type, title, msg) = when (status) {
+                            ApplicationStatus.APPROVED -> Triple(
+                                AppNotification.TYPE_APPLICATION_APPROVED,
+                                "Application Approved",
+                                "Your application for \"${drive.title}\" has been approved!"
+                            )
+                            ApplicationStatus.REJECTED -> Triple(
+                                AppNotification.TYPE_APPLICATION_REJECTED,
+                                "Application Update",
+                                "Your application for \"${drive.title}\" was not accepted this time."
+                            )
+                            else -> null
+                        } ?: return@onSuccess
+                        sendNotification(
+                            AppNotification(
+                                recipientUid = app.volunteerId,
+                                recipientRole = UserRole.VOLUNTEER.name,
+                                type = type,
+                                title = title,
+                                message = msg,
+                                driveId = driveId,
+                                driveName = drive.title,
+                                read = false,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
                 }
                 .onFailure { _errorMessage.value = it.message }
         }
@@ -474,10 +549,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             ApplicationService.updateApplicationStatus(applicationId, ApplicationStatus.WITHDRAWN)
                 .onSuccess {
-                    _volunteerApplications.value = _volunteerApplications.value.map { app ->
-                        if (app.applicationId == applicationId) app.copy(status = ApplicationStatus.WITHDRAWN) else app
+                    val app = _volunteerApplications.value.find { it.applicationId == applicationId }
+                    _volunteerApplications.value = _volunteerApplications.value.map { a ->
+                        if (a.applicationId == applicationId) a.copy(status = ApplicationStatus.WITHDRAWN) else a
                     }
                     _successMessage.value = "Application withdrawn"
+
+                    val drive = _allActiveDrives.value.find { it.driveId == driveId }
+                    if (app != null && drive != null) {
+                        sendNotification(
+                            AppNotification(
+                                recipientUid = drive.ngoId,
+                                recipientRole = UserRole.NGO.name,
+                                type = AppNotification.TYPE_APPLICATION_WITHDRAWN,
+                                title = "Application Withdrawn",
+                                message = "${app.volunteerName} withdrew their application for \"${drive.title}\"",
+                                driveId = driveId,
+                                driveName = drive.title,
+                                read = false,
+                                createdAt = System.currentTimeMillis()
+                            )
+                        )
+                    }
+                    // Cancel any scheduled reminder for this volunteer + drive
+                    val alarmId = "drive_${driveId}_${app?.volunteerId ?: ""}"
+                    viewModelScope.launch(Dispatchers.IO) {
+                        try {
+                            AlarmScheduler.cancel(getApplication(), alarmId)
+                            pendingAlarmDao.deleteAlarm(alarmId)
+                        } catch (_: Exception) {}
+                    }
                 }
                 .onFailure { _errorMessage.value = it.message; Log.e(
                     "FAILURE QUERY",
@@ -501,6 +602,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         applicationDao.insertApplication(application)
                         _volunteerApplications.value += application
                         _successMessage.value = "Application submitted successfully"
+
+                        val drive = _allActiveDrives.value.find { it.driveId == driveId }
+                        if (drive != null) {
+                            sendNotification(
+                                AppNotification(
+                                    recipientUid = drive.ngoId,
+                                    recipientRole = UserRole.NGO.name,
+                                    type = AppNotification.TYPE_APPLICATION_RECEIVED,
+                                    title = "New Application",
+                                    message = "$volunteerName applied for \"$driveTitle\"",
+                                    driveId = driveId,
+                                    driveName = driveTitle,
+                                    read = false,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            )
+                            scheduleReminderAlarm(getApplication(), drive, volunteerId)
+                        }
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to apply" }
             } finally {
@@ -629,5 +748,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearProfileUpdateSuccess() {
         _profileUpdateSuccess.value = false
+    }
+
+    fun startNotificationListener(uid: String) {
+        stopNotificationListener()
+        notificationListener = NotificationService.listenForNotifications(uid) { notifications ->
+            _notifications.value = notifications
+            _unreadCount.value = notifications.count { !it.read }
+        }
+    }
+
+    fun stopNotificationListener() {
+        notificationListener?.remove()
+        notificationListener = null
+    }
+
+    fun markNotificationRead(notificationId: String) {
+        viewModelScope.launch {
+            NotificationService.markAsRead(notificationId)
+            _notifications.value = _notifications.value.map { n ->
+                if (n.notificationId == notificationId) n.copy(read = true) else n
+            }
+            _unreadCount.value = _notifications.value.count { !it.read }
+        }
+    }
+
+    private suspend fun sendNotification(notification: AppNotification) {
+        try {
+            NotificationService.sendNotification(notification)
+        } catch (_: Exception) {}
+    }
+
+    private fun scheduleReminderAlarm(context: Context, drive: Drive, volunteerId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val triggerMs = AlarmScheduler.calculate24HrBeforeMs(drive.date)
+                if (triggerMs <= System.currentTimeMillis()) return@launch
+                val alarmId = "drive_${drive.driveId}_$volunteerId"
+                val alarm = PendingAlarm(
+                    alarmId = alarmId,
+                    applicationId = "",
+                    driveId = drive.driveId,
+                    driveName = drive.title,
+                    recipientUid = volunteerId,
+                    recipientRole = UserRole.VOLUNTEER.name,
+                    triggerTimeMs = triggerMs,
+                    type = PendingAlarm.TYPE_24HR
+                )
+                pendingAlarmDao.insertAlarm(alarm)
+                AlarmScheduler.schedule(context, alarm)
+            } catch (_: Exception) {}
+        }
     }
 }
