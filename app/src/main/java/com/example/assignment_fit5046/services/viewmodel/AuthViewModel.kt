@@ -22,8 +22,10 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 sealed class AuthState {
     data object Loading : AuthState()
@@ -37,6 +39,8 @@ data class PendingGoogleUser(val uid: String, val email: String, val name: Strin
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userDao = AppDatabase.getInstance(application).userDao()
+    private val driveDao = AppDatabase.getInstance(application).driveDao()
+    private val applicationDao = AppDatabase.getInstance(application).applicationDao()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -136,6 +140,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 CredentialManager.create(getApplication<Application>())
                     .clearCredentialState(ClearCredentialStateRequest())
+            } catch (_: Exception) {}
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    driveDao.clearDrives()
+                    applicationDao.clearApplications()
+                } catch (_: Exception) {}
+            }
+            try {
+                getApplication<Application>()
+                    .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    .edit().clear().apply()
+                getApplication<Application>()
+                    .getSharedPreferences("volunteerlink_prefs", Context.MODE_PRIVATE)
+                    .edit().clear().apply()
             } catch (_: Exception) {}
             _authState.value = AuthState.LoggedOut
         }
