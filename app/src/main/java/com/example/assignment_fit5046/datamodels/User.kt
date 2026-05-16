@@ -16,7 +16,8 @@ data class User(
     val profileImageUrl: String = "",
 
     val ngoName: String = "",
-    val ngoDescription: String = ""
+    val ngoDescription: String = "",
+    val fcmToken: String = ""
 )
 
 enum class UserRole {

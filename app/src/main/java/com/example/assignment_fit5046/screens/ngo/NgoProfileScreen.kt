@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
@@ -193,7 +194,7 @@ fun NgoProfileScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
 
             ProfileMenuItem(
-                icon = Icons.Default.Logout,
+                icon = Icons.AutoMirrored.Filled.Logout,
                 label = "Logout",
                 tint = MaterialTheme.colorScheme.error,
                 onClick = { authViewModel.signOut() }

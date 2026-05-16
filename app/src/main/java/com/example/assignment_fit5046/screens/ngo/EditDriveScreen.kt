@@ -19,7 +19,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -32,8 +34,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,11 +76,15 @@ fun EditDriveScreen(
     var description by remember(drive) { mutableStateOf(drive?.description ?: "") }
     var location by remember(drive) { mutableStateOf(drive?.location ?: "") }
     var date by remember(drive) { mutableStateOf(drive?.date ?: "") }
+    var startTime by remember(drive) { mutableStateOf(drive?.startTime ?: "") }
+    var endTime by remember(drive) { mutableStateOf(drive?.endTime ?: "") }
     var maxVolunteers by remember(drive) { mutableStateOf(drive?.maxVolunteers?.toString() ?: "") }
     var bannerUri by remember { mutableStateOf<Uri?>(null) }
     var bannerUrl by remember(drive) { mutableStateOf(drive?.bannerUrl ?: "") }
     var isUploading by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
 
     val isLoading by mainViewModel.isLoading.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
@@ -85,6 +93,8 @@ fun EditDriveScreen(
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val datePickerState = rememberDatePickerState()
+    val startTimePickerState = rememberTimePickerState(is24Hour = true)
+    val endTimePickerState = rememberTimePickerState(is24Hour = true)
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
@@ -121,6 +131,40 @@ fun EditDriveScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showStartTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            title = { Text("Select Start Time") },
+            text = { TimePicker(state = startTimePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    startTime = String.format("%02d:%02d", startTimePickerState.hour, startTimePickerState.minute)
+                    showStartTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showEndTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showEndTimePicker = false },
+            title = { Text("Select End Time") },
+            text = { TimePicker(state = endTimePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    endTime = String.format("%02d:%02d", endTimePickerState.hour, endTimePickerState.minute)
+                    showEndTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndTimePicker = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(
@@ -183,6 +227,36 @@ fun EditDriveScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(if (date.isEmpty()) "Pick Drive Date" else date)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Box(modifier = Modifier.fillMaxWidth().clickable { showStartTimePicker = true }) {
+                    OutlinedTextField(
+                        value = startTime,
+                        onValueChange = {},
+                        enabled = false,
+                        label = { Text("Start Time *") },
+                        leadingIcon = {
+                            Icon(Icons.Default.AccessTime, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Box(modifier = Modifier.fillMaxWidth().clickable { showEndTimePicker = true }) {
+                    OutlinedTextField(
+                        value = endTime,
+                        onValueChange = {},
+                        enabled = false,
+                        label = { Text("End Time *") },
+                        leadingIcon = {
+                            Icon(Icons.Default.AccessTime, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -288,6 +362,8 @@ fun EditDriveScreen(
                                     description = description,
                                     location = location,
                                     date = date,
+                                    startTime = startTime,
+                                    endTime = endTime,
                                     maxVolunteers = maxVolunteers.toIntOrNull() ?: it.maxVolunteers,
                                     bannerUrl = bannerUrl
                                 )

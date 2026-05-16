@@ -29,10 +29,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("/Users/godspeed/Desktop/Monash/SEM-3/FIT5046-Mobile-App/Ass2/FIT5046-Assignment/my-release-key.keystore")  // full path to your .jks file
+            storePassword = "123456"
+            keyAlias = "my-key-alias"
+            keyPassword = "123456"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -89,11 +98,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
 
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.7.1")

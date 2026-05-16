@@ -24,8 +24,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -43,8 +45,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -98,7 +102,11 @@ fun CreateDriveScreen(
     // Step 2
     var location by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
+    var startTime by remember { mutableStateOf("") }
+    var endTime by remember { mutableStateOf("") }
     var maxVolunteers by remember { mutableStateOf("") }
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
 
     // Step 3
     var bannerUri by remember { mutableStateOf<Uri?>(null) }
@@ -121,6 +129,8 @@ fun CreateDriveScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    val startTimePickerState = rememberTimePickerState(is24Hour = true)
+    val endTimePickerState = rememberTimePickerState(is24Hour = true)
 
     var categoryExpanded by remember { mutableStateOf(false) }
 
@@ -157,6 +167,40 @@ fun CreateDriveScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showStartTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showStartTimePicker = false },
+            title = { Text("Select Start Time") },
+            text = { TimePicker(state = startTimePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    startTime = String.format("%02d:%02d", startTimePickerState.hour, startTimePickerState.minute)
+                    showStartTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartTimePicker = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showEndTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showEndTimePicker = false },
+            title = { Text("Select End Time") },
+            text = { TimePicker(state = endTimePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    endTime = String.format("%02d:%02d", endTimePickerState.hour, endTimePickerState.minute)
+                    showEndTimePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndTimePicker = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(
@@ -200,6 +244,10 @@ fun CreateDriveScreen(
                         onLocationChange = { location = it },
                         date = date,
                         onPickDate = { showDatePicker = true },
+                        startTime = startTime,
+                        onPickStartTime = { showStartTimePicker = true },
+                        endTime = endTime,
+                        onPickEndTime = { showEndTimePicker = true },
                         maxVolunteers = maxVolunteers,
                         onMaxVolunteersChange = { maxVolunteers = it },
                         onBack = { currentStep = 1 },
@@ -220,23 +268,29 @@ fun CreateDriveScreen(
                         },
                         onBack = { currentStep = 2 },
                         onPost = {
-                            mainViewModel.createDrive(
-                                Drive(
-                                    driveId = "",
-                                    ngoId = currentUser?.uid ?: "",
-                                    ngoName = currentUser?.ngoName ?: currentUser?.name ?: "",
-                                    title = title,
-                                    description = description,
-                                    location = location,
-                                    date = date,
-                                    maxVolunteers = maxVolunteers.toIntOrNull() ?: 0,
-                                    currentVolunteers = 0,
-                                    category = category,
-                                    status = DriveStatus.ACTIVE,
-                                    createdAt = System.currentTimeMillis(),
-                                    bannerUrl = bannerUrl
+                            if (startTime.isBlank() || endTime.isBlank()) {
+                                toastMessage = "Please select start and end time"
+                            } else {
+                                mainViewModel.createDrive(
+                                    Drive(
+                                        driveId = "",
+                                        ngoId = currentUser?.uid ?: "",
+                                        ngoName = currentUser?.ngoName ?: currentUser?.name ?: "",
+                                        title = title,
+                                        description = description,
+                                        location = location,
+                                        date = date,
+                                        maxVolunteers = maxVolunteers.toIntOrNull() ?: 0,
+                                        currentVolunteers = 0,
+                                        category = category,
+                                        status = DriveStatus.ACTIVE,
+                                        createdAt = System.currentTimeMillis(),
+                                        bannerUrl = bannerUrl,
+                                        startTime = startTime,
+                                        endTime = endTime
+                                    )
                                 )
-                            )
+                            }
                         }
                     )
                 }
@@ -417,6 +471,10 @@ private fun Step2Content(
     onLocationChange: (String) -> Unit,
     date: String,
     onPickDate: () -> Unit,
+    startTime: String,
+    onPickStartTime: () -> Unit,
+    endTime: String,
+    onPickEndTime: () -> Unit,
     maxVolunteers: String,
     onMaxVolunteersChange: (String) -> Unit,
     onBack: () -> Unit,
@@ -438,6 +496,36 @@ private fun Step2Content(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(if (date.isEmpty()) "Pick Drive Date" else date)
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Box(modifier = Modifier.fillMaxWidth().clickable { onPickStartTime() }) {
+            OutlinedTextField(
+                value = startTime,
+                onValueChange = {},
+                enabled = false,
+                label = { Text("Start Time *") },
+                leadingIcon = {
+                    Icon(Icons.Default.AccessTime, contentDescription = null)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Box(modifier = Modifier.fillMaxWidth().clickable { onPickEndTime() }) {
+            OutlinedTextField(
+                value = endTime,
+                onValueChange = {},
+                enabled = false,
+                label = { Text("End Time *") },
+                leadingIcon = {
+                    Icon(Icons.Default.AccessTime, contentDescription = null)
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))

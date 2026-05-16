@@ -17,10 +17,13 @@ import com.example.assignment_fit5046.services.remote.firebase.UserService
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 sealed class AuthState {
     data object Loading : AuthState()
@@ -157,26 +160,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             _authState.value = AuthState.Loading
             val credentialManager = CredentialManager.create(context)
             try {
-                val credential = try {
-                    val option = GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(true)
-                        .setServerClientId(webClientId)
-                        .setAutoSelectEnabled(true)
-                        .build()
-                    val request = GetCredentialRequest.Builder()
-                        .addCredentialOption(option)
-                        .build()
-                    credentialManager.getCredential(context, request).credential
-                } catch (_: Exception) {
-                    val option = GetGoogleIdOption.Builder()
-                        .setFilterByAuthorizedAccounts(false)
-                        .setServerClientId(webClientId)
-                        .build()
-                    val request = GetCredentialRequest.Builder()
-                        .addCredentialOption(option)
-                        .build()
-                    credentialManager.getCredential(context, request).credential
-                }
+                val option = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(webClientId)
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(option)
+                    .build()
+
+                val credential = credentialManager.getCredential(context, request).credential
 
                 if (credential is CustomCredential &&
                     credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL
@@ -194,7 +188,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                             userDao.insertUser(existingUser)
                             _authState.value = AuthState.LoggedIn(existingUser)
                         } else {
-                            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                            val firebaseUser = com.google.firebase.auth.FirebaseAuth
+                                .getInstance().currentUser
                             _pendingGoogleUser.value = PendingGoogleUser(
                                 uid = firebaseUser?.uid ?: "",
                                 email = firebaseUser?.email ?: "",
@@ -210,6 +205,26 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = AuthState.Error("Sign-in cancelled")
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
+            }
+        }
+    }
+
+    fun registerFcmToken(uid: String) {
+        viewModelScope.launch {
+            try {
+                FirebaseMessaging.getInstance().token.await().let { token ->
+                    FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(uid)
+                        .update("fcmToken", token)
+                        .await()
+                    val user = userDao.getUser()
+                    if (user != null) {
+                        userDao.insertUser(user.copy(fcmToken = token))
+                    }
+                }
+            } catch (e: Exception) {
+                // Fail silently — token registration is non-critical
             }
         }
     }

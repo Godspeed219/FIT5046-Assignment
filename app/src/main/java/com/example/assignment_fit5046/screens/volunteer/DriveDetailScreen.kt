@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Group
@@ -324,6 +325,17 @@ fun DriveDetailScreen(
 
                     item {
                         DriveDetailRow(icon = Icons.Default.CalendarToday, text = drive.date)
+                    }
+
+                    if (drive.startTime.isNotBlank()) {
+                        item {
+                            DriveDetailRow(
+                                icon = Icons.Default.AccessTime,
+                                text = if (drive.endTime.isNotBlank())
+                                    "${drive.startTime} – ${drive.endTime}"
+                                else drive.startTime
+                            )
+                        }
                     }
 
                     item {

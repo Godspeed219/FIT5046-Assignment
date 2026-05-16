@@ -17,7 +17,9 @@ data class Drive(
     val category: String = "",
     val status: DriveStatus = DriveStatus.ACTIVE,
     val createdAt: Long = 0L,
-    val bannerUrl: String = ""
+    val bannerUrl: String = "",
+    val startTime: String = "",
+    val endTime: String = ""
 )
 
 enum class DriveStatus {
