@@ -7,12 +7,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,22 +23,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddPhotoAlternate
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -48,9 +55,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -173,12 +180,40 @@ fun EditDriveScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Edit Drive") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = Color.Black,
-                    actionIconContentColor = MaterialTheme.colorScheme.primary,
-                ),
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
             )
+        },
+        bottomBar = {
+            Surface(shadowElevation = 8.dp, tonalElevation = 2.dp) {
+                Button(
+                    onClick = {
+                        drive?.let {
+                            mainViewModel.updateDrive(
+                                it.copy(
+                                    title = title,
+                                    description = description,
+                                    location = location,
+                                    date = date,
+                                    startTime = startTime,
+                                    endTime = endTime,
+                                    maxVolunteers = maxVolunteers.toIntOrNull() ?: it.maxVolunteers,
+                                    bannerUrl = bannerUrl
+                                )
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    enabled = !isLoading && !isUploading
+                ) {
+                    Text("Save Changes")
+                }
+            }
         }
     ) { paddingValues ->
         Box(
@@ -189,103 +224,14 @@ fun EditDriveScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    label = { Text("Drive Title") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    minLines = 4,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("Location") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (date.isEmpty()) "Pick Drive Date" else date)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Box(modifier = Modifier.fillMaxWidth().clickable { showStartTimePicker = true }) {
-                    OutlinedTextField(
-                        value = startTime,
-                        onValueChange = {},
-                        enabled = false,
-                        label = { Text("Start Time *") },
-                        leadingIcon = {
-                            Icon(Icons.Default.AccessTime, contentDescription = null)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Box(modifier = Modifier.fillMaxWidth().clickable { showEndTimePicker = true }) {
-                    OutlinedTextField(
-                        value = endTime,
-                        onValueChange = {},
-                        enabled = false,
-                        label = { Text("End Time *") },
-                        leadingIcon = {
-                            Icon(Icons.Default.AccessTime, contentDescription = null)
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = maxVolunteers,
-                    onValueChange = { maxVolunteers = it },
-                    label = { Text("Max Volunteers") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text("Drive Banner", style = MaterialTheme.typography.titleSmall)
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Banner hero — full width, tappable
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                        .height(200.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable { imagePickerLauncher.launch("image/*") },
                     contentAlignment = Alignment.Center
                 ) {
@@ -316,17 +262,42 @@ fun EditDriveScreen(
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    "Tap to change banner",
+                                    "Tap to add banner",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
                     }
+                    // Edit overlay icon
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(12.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                "Change",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Upload button + status
                 if (bannerUri != null && bannerUrl == (drive?.bannerUrl ?: "")) {
                     Button(
                         onClick = {
@@ -336,46 +307,136 @@ fun EditDriveScreen(
                                 isUploading = false
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         enabled = !isUploading
                     ) {
                         Text(if (isUploading) "Uploading..." else "Upload New Banner")
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 if (bannerUrl != (drive?.bannerUrl ?: "") && bannerUrl.isNotEmpty()) {
-                    Text(
-                        "New banner uploaded",
-                        color = StatusApproved,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = StatusApproved
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            "New banner uploaded",
+                            color = StatusApproved,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                Button(
-                    onClick = {
-                        drive?.let {
-                            mainViewModel.updateDrive(
-                                it.copy(
-                                    title = title,
-                                    description = description,
-                                    location = location,
-                                    date = date,
-                                    startTime = startTime,
-                                    endTime = endTime,
-                                    maxVolunteers = maxVolunteers.toIntOrNull() ?: it.maxVolunteers,
-                                    bannerUrl = bannerUrl
-                                )
+                // Section: Drive Details
+                SectionHeader("Drive Details")
+
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Title") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Description") },
+                        minLines = 4,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = location,
+                        onValueChange = { location = it },
+                        label = { Text("Location") },
+                        leadingIcon = {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Section: Schedule
+                SectionHeader("Schedule")
+
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    // Date field — read-only, opens DatePicker on click
+                    Box(modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true }) {
+                        OutlinedTextField(
+                            value = date,
+                            onValueChange = {},
+                            enabled = false,
+                            label = { Text("Drive Date") },
+                            leadingIcon = {
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showStartTimePicker = true }
+                        ) {
+                            OutlinedTextField(
+                                value = startTime,
+                                onValueChange = {},
+                                enabled = false,
+                                label = { Text("Start Time") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp))
+                                },
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
-                ) {
-                    Text("Save Changes")
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showEndTimePicker = true }
+                        ) {
+                            OutlinedTextField(
+                                value = endTime,
+                                onValueChange = {},
+                                enabled = false,
+                                label = { Text("End Time") },
+                                leadingIcon = {
+                                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp))
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = maxVolunteers,
+                        onValueChange = { maxVolunteers = it },
+                        label = { Text("Max Volunteers") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(18.dp))
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -393,5 +454,19 @@ fun EditDriveScreen(
                 onDismiss = { toastMessage = null }
             )
         }
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String) {
+    Column {
+        HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+        )
     }
 }

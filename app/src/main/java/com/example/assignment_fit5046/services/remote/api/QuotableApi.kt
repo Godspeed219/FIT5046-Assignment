@@ -4,6 +4,6 @@ import com.example.assignment_fit5046.datamodels.Quote
 import retrofit2.http.GET
 
 interface QuotableApi {
-    @GET("random")
-    suspend fun getRandomQuote(): Quote
+    @GET("quotes/random")
+    suspend fun getRandomQuote(): List<Quote>
 }

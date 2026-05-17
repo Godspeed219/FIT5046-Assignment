@@ -51,7 +51,8 @@ fun DriveManageCard(
     applicationCount: Int,
     onViewApplications: () -> Unit,
     onEdit: () -> Unit,
-    onToggleStatus: () -> Unit
+    onToggleStatus: () -> Unit,
+    onPreview: () -> Unit = {}
 ) {
     val accentColor = when (drive.status) {
         DriveStatus.ACTIVE -> StatusApproved
@@ -59,6 +60,7 @@ fun DriveManageCard(
     }
 
     ElevatedCard(
+        onClick = onPreview,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 9.dp),

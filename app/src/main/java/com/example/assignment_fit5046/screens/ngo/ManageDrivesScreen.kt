@@ -232,6 +232,9 @@ fun ManageDrivesScreen(
                                     },
                                     onToggleStatus = {
                                         if (drive.status == DriveStatus.ACTIVE) driveToClose = drive
+                                    },
+                                    onPreview = {
+                                        navController.navigate("${Screen.DriveDetail.route}/${drive.driveId}")
                                     }
                                 )
                             }

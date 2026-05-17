@@ -6,11 +6,13 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.assignment_fit5046.BuildConfig
 import com.example.assignment_fit5046.datamodels.AppNotification
 import com.example.assignment_fit5046.datamodels.Application as VolunteerApplication
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.Drive
 import com.example.assignment_fit5046.datamodels.DriveStatus
+import com.example.assignment_fit5046.datamodels.GlobalGivingProject
 import com.example.assignment_fit5046.datamodels.PendingAlarm
 import com.example.assignment_fit5046.datamodels.Quote
 import com.example.assignment_fit5046.datamodels.User
@@ -99,6 +101,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _profileUpdateSuccess = MutableStateFlow(false)
     val profileUpdateSuccess: StateFlow<Boolean> = _profileUpdateSuccess.asStateFlow()
+
+    private val _ngoSearchResults = MutableStateFlow<List<GlobalGivingProject>>(emptyList())
+    val ngoSearchResults: StateFlow<List<GlobalGivingProject>> = _ngoSearchResults.asStateFlow()
 
     private val _driveWeather = MutableStateFlow<WeatherResponse?>(null)
     val driveWeather: StateFlow<WeatherResponse?> = _driveWeather.asStateFlow()
@@ -433,7 +438,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     ) }
 
                 try {
-                    _quote.value = RetrofitClient.quotableApi.getRandomQuote()
+                    _quote.value = RetrofitClient.quotableApi.getRandomQuote().firstOrNull()
                 } catch (_: Exception) {
                     _quote.value = Quote(
                         id = "static",
@@ -571,6 +576,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             (category == "All" || drive.category == category) &&
                 (query.isEmpty() || drive.title.contains(query, ignoreCase = true) ||
                     drive.description.contains(query, ignoreCase = true))
+        }
+    }
+
+    fun searchGlobalGivingByCategory(category: String) {
+        val themeId = when (category) {
+            "Education"     -> "edu"
+            "Health"        -> "health"
+            "Environment"   -> "climate"
+            "Animal Welfare"-> "animals"
+            "Community"     -> "rights"
+            else            -> { _ngoSearchResults.value = emptyList(); return }
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = RetrofitClient.globalGivingApi.getProjectsByTheme(
+                    theme = themeId,
+                    apiKey = BuildConfig.GLOBAL_GIVING_API_KEY
+                )
+                _ngoSearchResults.value = response.projects.project
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load NGO projects: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

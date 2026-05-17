@@ -3,8 +3,7 @@ package com.example.assignment_fit5046.datamodels
 import com.google.gson.annotations.SerializedName
 
 data class WeatherResponse(
-    @SerializedName("current") val current: CurrentWeather,
-    val cityName: String
+    @SerializedName("current") val current: CurrentWeather
 )
 
 data class CurrentWeather(

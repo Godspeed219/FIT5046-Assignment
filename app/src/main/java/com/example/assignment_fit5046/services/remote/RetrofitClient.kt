@@ -44,8 +44,17 @@ object RetrofitClient {
     }
 
     val globalGivingApi: GlobalGivingApi by lazy {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("Accept", "application/json")
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
         Retrofit.Builder()
             .baseUrl("https://api.globalgiving.org/")
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(GlobalGivingApi::class.java)

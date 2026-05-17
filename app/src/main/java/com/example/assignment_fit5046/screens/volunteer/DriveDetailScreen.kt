@@ -1,6 +1,7 @@
 package com.example.assignment_fit5046.screens.volunteer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
@@ -37,8 +39,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,15 +52,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.Screen
-import com.example.assignment_fit5046.components.volunteer.WeatherCard
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
@@ -74,6 +75,8 @@ import com.example.assignment_fit5046.ui.StatusRejected
 import com.example.assignment_fit5046.ui.StatusRejectedContainer
 import com.example.assignment_fit5046.ui.SurfaceVariant
 import com.example.assignment_fit5046.ui.TextDisabled
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +90,7 @@ fun DriveDetailScreen(
     val currentUser = (authState as? AuthState.LoggedIn)?.user
 
     val allActiveDrives by mainViewModel.allActiveDrives.collectAsState()
+    val ngoDrives by mainViewModel.ngoDrives.collectAsState()
     val volunteerApplications by mainViewModel.volunteerApplications.collectAsState()
     val errorMessage by mainViewModel.errorMessage.collectAsState()
     val successMessage by mainViewModel.successMessage.collectAsState()
@@ -94,7 +98,7 @@ fun DriveDetailScreen(
     val driveDistance by mainViewModel.driveDistance.collectAsState()
     val unreadCount by mainViewModel.unreadCount.collectAsState()
 
-    val drive = allActiveDrives.find { it.driveId == driveId }
+    val drive = allActiveDrives.find { it.driveId == driveId } ?: ngoDrives.find { it.driveId == driveId }
     val existingApplication = volunteerApplications.find { it.driveId == driveId }
 
     var toastMessage by remember { mutableStateOf<String?>(null) }
@@ -189,7 +193,7 @@ fun DriveDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(drive?.title ?: "") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -205,7 +209,7 @@ fun DriveDetailScreen(
             )
         },
         bottomBar = {
-            if (drive != null) {
+            if (drive != null && currentUser?.role != UserRole.NGO) {
                 Surface(shadowElevation = 8.dp, tonalElevation = 2.dp) {
                     Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                         when (val appStatus = existingApplication?.status) {
@@ -262,120 +266,280 @@ fun DriveDetailScreen(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+                    // Item 1 — Hero banner (220dp)
                     item {
-                        if (drive.bannerUrl.isNotEmpty()) {
-                            AsyncImage(
-                                model = drive.bannerUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                        ) {
+                            if (drive.bannerUrl.isNotEmpty()) {
+                                AsyncImage(
+                                    model = drive.bannerUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.VolunteerActivism,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(64.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            // Category pill — bottom left
                             Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
+                                    .align(Alignment.BottomStart)
+                                    .padding(start = 14.dp, bottom = 14.dp)
+                                    .background(Color(0x99000000), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 12.dp, vertical = 5.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.VolunteerActivism,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(72.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                Text(drive.category, color = Color.White, fontSize = 12.sp)
+                            }
+                            // Spots left pill — bottom right
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 14.dp, bottom = 14.dp)
+                                    .background(Color(0x99000000), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 12.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = "${drive.maxVolunteers - drive.currentVolunteers} spots left",
+                                    color = Color.White,
+                                    fontSize = 12.sp
                                 )
                             }
                         }
                     }
 
+                    // Item 2 — 3-column stat strip
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        val timeValue = if (drive.startTime.isNotBlank()) {
+                            try {
+                                val parsePattern = DateTimeFormatter.ofPattern("H:mm")
+                                val displayPattern = DateTimeFormatter.ofPattern("h:mm a")
+                                val startFormatted = LocalTime.parse(drive.startTime, parsePattern).format(displayPattern)
+                                if (drive.endTime.isNotBlank()) {
+                                    val endFormatted = LocalTime.parse(drive.endTime, parsePattern).format(displayPattern)
+                                    "$startFormatted – $endFormatted"
+                                } else startFormatted
+                            } catch (_: Exception) {
+                                if (drive.endTime.isNotBlank()) "${drive.startTime} – ${drive.endTime}" else drive.startTime
+                            }
+                        } else "–"
+
+                        Column {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                StatColumn(
+                                    modifier = Modifier.weight(1f),
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.CalendarToday,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    label = "Date",
+                                    value = drive.date
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(0.5.dp)
+                                        .height(40.dp)
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                )
+                                StatColumn(
+                                    modifier = Modifier.weight(1f),
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.AccessTime,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    label = "Time",
+                                    value = timeValue
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(0.5.dp)
+                                        .height(40.dp)
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                )
+                                StatColumn(
+                                    modifier = Modifier.weight(1f),
+                                    icon = {
+                                        Icon(
+                                            Icons.Default.Group,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    label = "Spots",
+                                    value = "${drive.maxVolunteers - drive.currentVolunteers} left"
+                                )
+                            }
+                            HorizontalDivider(
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                            )
+                        }
+                    }
+
+                    // Item 3 — NGO name + description
+                    item {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)
                         ) {
                             Text(
                                 text = drive.ngoName,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            SuggestionChip(
-                                onClick = {},
-                                label = { Text(drive.category) },
-                                colors = SuggestionChipDefaults.suggestionChipColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = drive.description,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Item 4 — Info rows (location + optional distance)
+                    item {
+                        InfoRow(
+                            icon = {
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
-                            )
-                        }
-                    }
-
-                    item {
-                        Text(
-                            text = drive.description,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    item { HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp)) }
-
-                    item {
-                        Text(
-                            text = "Event Details",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    item {
-                        DriveDetailRow(icon = Icons.Default.CalendarToday, text = drive.date)
-                    }
-
-                    if (drive.startTime.isNotBlank()) {
-                        item {
-                            DriveDetailRow(
-                                icon = Icons.Default.AccessTime,
-                                text = if (drive.endTime.isNotBlank())
-                                    "${drive.startTime} – ${drive.endTime}"
-                                else drive.startTime
-                            )
-                        }
-                    }
-
-                    item {
-                        DriveDetailRow(icon = Icons.Default.LocationOn, text = drive.location)
-                    }
-
-                    item {
-                        DriveDetailRow(
-                            icon = Icons.Default.Group,
-                            text = "${drive.maxVolunteers - drive.currentVolunteers} volunteer spots remaining"
+                            },
+                            text = drive.location
                         )
                     }
 
                     driveDistance?.let { distKm ->
                         item {
-                            DriveDetailRow(
-                                icon = Icons.Default.DirectionsCar,
+                            InfoRow(
+                                icon = {
+                                    Icon(
+                                        Icons.Default.DirectionsCar,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                },
                                 text = "%.1f km from Melbourne CBD".format(distKm)
                             )
                         }
                     }
 
+                    // Item 5 — Weather card
                     driveWeather?.let { weather ->
-                        item { WeatherCard(weather = weather) }
+                        item {
+                            Surface(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                                    .padding(top = 12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Temperature + condition label
+                                    Column {
+                                        Text(
+                                            text = "${weather.current.temperature2m.toInt()}°",
+                                            fontSize = 28.sp,
+                                            fontWeight = FontWeight(500),
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                                        )
+                                        Text(
+                                            text = weather.current.description,
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                    // Vertical divider
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = 12.dp)
+                                            .width(0.5.dp)
+                                            .height(40.dp)
+                                            .background(MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f))
+                                    )
+                                    // Wind + Condition columns
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                "Wind",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                            )
+                                            Text(
+                                                "${weather.current.windSpeed10m.toInt()} km/h",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                                            )
+                                        }
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                            Text(
+                                                "Condition",
+                                                fontSize = 11.sp,
+                                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                            )
+                                            Text(
+                                                weather.current.description,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
+                    // Item 6 — Bottom spacer
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
+
+            // Full-screen loader until weather data arrives
+            AppLoader(
+                isLoading = driveWeather == null && drive != null,
+                role = UserRole.VOLUNTEER
+            )
 
             AppToast(
                 message = toastMessage ?: "",
@@ -388,19 +552,43 @@ fun DriveDetailScreen(
 }
 
 @Composable
-private fun DriveDetailRow(icon: ImageVector, text: String) {
-    Row(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
+private fun StatColumn(
+    modifier: Modifier = Modifier,
+    icon: @Composable () -> Unit,
+    label: String,
+    value: String
+) {
+    Column(
+        modifier = modifier.padding(vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp),
-            tint = MaterialTheme.colorScheme.primary
+        icon()
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun InfoRow(
+    icon: @Composable () -> Unit,
+    text: String
+) {
+    Column {
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
         )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = text, style = MaterialTheme.typography.bodyMedium)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon()
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(text = text, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 

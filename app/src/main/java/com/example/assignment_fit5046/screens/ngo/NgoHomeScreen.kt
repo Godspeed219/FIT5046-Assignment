@@ -189,6 +189,9 @@ fun NgoDashboardScreen(
                             onToggleStatus = {
                                 val newStatus = if (drive.status == DriveStatus.ACTIVE) DriveStatus.CLOSED else DriveStatus.ACTIVE
                                 mainViewModel.updateDriveStatus(drive.driveId, newStatus)
+                            },
+                            onPreview = {
+                                navController.navigate("${Screen.DriveDetail.route}/${drive.driveId}")
                             }
                         )
                     }
