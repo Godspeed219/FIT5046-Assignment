@@ -19,4 +19,7 @@ interface PendingAlarmDao {
 
     @Query("DELETE FROM pending_alarms WHERE driveId = :driveId")
     suspend fun deleteAlarmsForDrive(driveId: String)
+
+    @Query("DELETE FROM pending_alarms WHERE applicationId = :applicationId")
+    suspend fun deleteAlarmsByApplication(applicationId: String)
 }

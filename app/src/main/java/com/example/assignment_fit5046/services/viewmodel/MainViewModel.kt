@@ -43,6 +43,7 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -273,32 +274,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val app = _ngoApplications.value.find { it.applicationId == applicationId }
                     val drive = _ngoDrives.value.find { it.driveId == driveId }
                     if (app != null && drive != null) {
-                        val (type, title, msg) = when (status) {
-                            ApplicationStatus.APPROVED -> Triple(
-                                AppNotification.TYPE_APPLICATION_APPROVED,
-                                "Application Approved",
-                                "Your application for \"${drive.title}\" has been approved!"
-                            )
-                            ApplicationStatus.REJECTED -> Triple(
-                                AppNotification.TYPE_APPLICATION_REJECTED,
-                                "Application Update",
-                                "Your application for \"${drive.title}\" was not accepted this time."
-                            )
-                            else -> null
-                        } ?: return@onSuccess
-                        sendNotification(
-                            AppNotification(
-                                recipientUid = app.volunteerId,
-                                recipientRole = UserRole.VOLUNTEER.name,
-                                type = type,
-                                title = title,
-                                message = msg,
-                                driveId = driveId,
-                                driveName = drive.title,
-                                read = false,
-                                createdAt = System.currentTimeMillis()
-                            )
-                        )
+                        // Schedule 24hr AlarmManager reminder when application is approved
+                        if (status == ApplicationStatus.APPROVED) {
+                            val triggerMs = AlarmScheduler.calculate24HrBeforeMs(drive.date)
+                            if (triggerMs > System.currentTimeMillis()) {
+                                val alarm = PendingAlarm(
+                                    alarmId = UUID.randomUUID().toString(),
+                                    applicationId = applicationId,
+                                    driveId = driveId,
+                                    driveName = drive.title,
+                                    recipientUid = app.volunteerId,
+                                    recipientRole = UserRole.VOLUNTEER.name,
+                                    triggerTimeMs = triggerMs,
+                                    type = PendingAlarm.TYPE_24HR
+                                )
+                                pendingAlarmDao.insertAlarm(alarm)
+                                AlarmScheduler.schedule(getApplication(), alarm)
+                            }
+                        }
+
+                        // Cancel alarm if rejected
+                        if (status == ApplicationStatus.REJECTED) {
+                            AlarmScheduler.cancel(getApplication(), applicationId)
+                            pendingAlarmDao.deleteAlarmsByApplication(applicationId)
+                        }
+
+                        // Sync Room with updated status
+                        applicationDao.updateStatus(applicationId, status)
                     }
                 }
                 .onFailure { _errorMessage.value = it.message }
@@ -602,24 +604,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         applicationDao.insertApplication(application)
                         _volunteerApplications.value += application
                         _successMessage.value = "Application submitted successfully"
-
-                        val drive = _allActiveDrives.value.find { it.driveId == driveId }
-                        if (drive != null) {
-                            sendNotification(
-                                AppNotification(
-                                    recipientUid = drive.ngoId,
-                                    recipientRole = UserRole.NGO.name,
-                                    type = AppNotification.TYPE_APPLICATION_RECEIVED,
-                                    title = "New Application",
-                                    message = "$volunteerName applied for \"$driveTitle\"",
-                                    driveId = driveId,
-                                    driveName = driveTitle,
-                                    read = false,
-                                    createdAt = System.currentTimeMillis()
-                                )
-                            )
-                            scheduleReminderAlarm(getApplication(), drive, volunteerId)
-                        }
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to apply" }
             } finally {

@@ -21,11 +21,14 @@ object AlarmScheduler {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            // Exact alarm permission not granted — fall back to inexact
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.triggerTimeMs, pendingIntent)
+            return
+        }
         try {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, alarm.triggerTimeMs, pendingIntent)
-        } catch (_: SecurityException) {
-            // SCHEDULE_EXACT_ALARM not granted — skip silently
-        }
+        } catch (_: SecurityException) { }
     }
 
     fun cancel(context: Context, alarmId: String) {
@@ -50,6 +53,10 @@ object AlarmScheduler {
         }
 
     fun calculate24HrBeforeMs(dateStr: String): Long {
+        // TODO: remove test override before final submission
+        return System.currentTimeMillis() + 30_000L
+
+        /* REAL CALCULATION — restore after testing
         val formats = listOf(
             SimpleDateFormat("dd MMM yyyy", Locale.getDefault()),
             SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -61,5 +68,6 @@ object AlarmScheduler {
             } catch (_: Exception) {}
         }
         return -1L
+        */
     }
 }

@@ -1,10 +1,5 @@
 package com.example.assignment_fit5046.screens.ngo
 
-import android.Manifest
-import android.content.Context
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +40,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -61,7 +55,6 @@ import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
-import androidx.core.content.edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,32 +76,6 @@ fun NgoDashboardScreen(
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val pullRefreshState = rememberPullToRefreshState()
     val unreadCount by mainViewModel.unreadCount.collectAsState()
-
-    val context = LocalContext.current
-
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* granted or denied — no action needed, fail silently */ }
-
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* granted or denied — no action needed, fail silently */ }
-
-    LaunchedEffect(Unit) {
-        val prefs = context.getSharedPreferences("volunteerlink_prefs", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("permissions_requested", false)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-            prefs.edit { putBoolean("permissions_requested", true) }
-        }
-    }
 
     LaunchedEffect(currentUser?.uid) {
         currentUser?.uid?.let { mainViewModel.loadNgoDashboard(it) }

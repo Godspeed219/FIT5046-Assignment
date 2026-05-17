@@ -159,46 +159,6 @@ fun MyApplicationsScreen(
                                 application = application,
                                 onWithdraw = { pendingWithdraw = application }
                             )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
-                            ApplicationCard(
-                                application = application,
-                                onWithdraw = { pendingWithdraw = application }
-                            )
                         }
                         item {
                             Spacer(modifier = Modifier.height(88.dp))
