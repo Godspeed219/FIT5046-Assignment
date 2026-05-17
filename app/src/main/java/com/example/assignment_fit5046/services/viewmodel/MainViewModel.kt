@@ -16,6 +16,7 @@ import com.example.assignment_fit5046.datamodels.Quote
 import com.example.assignment_fit5046.datamodels.User
 import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.datamodels.WeatherResponse
+import com.example.assignment_fit5046.components.common.NotificationHelper
 import com.example.assignment_fit5046.services.AlarmScheduler
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.RetrofitClient
@@ -274,6 +275,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val app = _ngoApplications.value.find { it.applicationId == applicationId }
                     val drive = _ngoDrives.value.find { it.driveId == driveId }
                     if (app != null && drive != null) {
+                        // Notify volunteer of approval or rejection
+                        if (status == ApplicationStatus.APPROVED || status == ApplicationStatus.REJECTED) {
+                            sendNotification(
+                                AppNotification(
+                                    recipientUid = app.volunteerId,
+                                    recipientRole = UserRole.VOLUNTEER.name,
+                                    type = if (status == ApplicationStatus.APPROVED)
+                                        AppNotification.TYPE_APPLICATION_APPROVED
+                                    else
+                                        AppNotification.TYPE_APPLICATION_REJECTED,
+                                    title = if (status == ApplicationStatus.APPROVED)
+                                        "Application Approved"
+                                    else
+                                        "Application Rejected",
+                                    message = if (status == ApplicationStatus.APPROVED)
+                                        "Your application for \"${drive.title}\" has been approved!"
+                                    else
+                                        "Your application for \"${drive.title}\" has been rejected.",
+                                    driveId = driveId,
+                                    driveName = drive.title,
+                                    read = false,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
+
                         // Schedule 24hr AlarmManager reminder when application is approved
                         if (status == ApplicationStatus.APPROVED) {
                             val triggerMs = AlarmScheduler.calculate24HrBeforeMs(drive.date)
@@ -604,6 +631,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         applicationDao.insertApplication(application)
                         _volunteerApplications.value += application
                         _successMessage.value = "Application submitted successfully"
+
+                        // Notify NGO of new application
+                        val drive = _allActiveDrives.value.find { it.driveId == driveId }
+                        if (drive != null) {
+                            sendNotification(
+                                AppNotification(
+                                    recipientUid = drive.ngoId,
+                                    recipientRole = UserRole.NGO.name,
+                                    type = AppNotification.TYPE_APPLICATION_RECEIVED,
+                                    title = "New Application",
+                                    message = "$volunteerName applied for \"$driveTitle\"",
+                                    driveId = driveId,
+                                    driveName = driveTitle,
+                                    read = false,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
                     }
                     .onFailure { _errorMessage.value = it.message ?: "Failed to apply" }
             } finally {
@@ -736,7 +781,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startNotificationListener(uid: String) {
         stopNotificationListener()
+        var isFirstLoad = true
+        var knownIds = emptySet<String>()
         notificationListener = NotificationService.listenForNotifications(uid) { notifications ->
+            val currentIds = notifications.map { it.notificationId }.toSet()
+
+            if (!isFirstLoad) {
+                notifications.filter { it.notificationId !in knownIds }.forEach { n ->
+                    val channelId = when (n.type) {
+                        AppNotification.TYPE_APPLICATION_RECEIVED,
+                        AppNotification.TYPE_APPLICATION_APPROVED,
+                        AppNotification.TYPE_APPLICATION_REJECTED,
+                        AppNotification.TYPE_APPLICATION_WITHDRAWN -> NotificationHelper.CHANNEL_APPLICATIONS
+                        AppNotification.TYPE_DRIVE_REMINDER -> NotificationHelper.CHANNEL_REMINDERS
+                        else -> NotificationHelper.CHANNEL_DRIVES
+                    }
+                    NotificationHelper.showNotification(
+                        context = getApplication(),
+                        title = n.title,
+                        message = n.message,
+                        channelId = channelId,
+                        notificationId = n.notificationId.hashCode()
+                    )
+                }
+            }
+
+            isFirstLoad = false
+            knownIds = currentIds
             _notifications.value = notifications
             _unreadCount.value = notifications.count { !it.read }
         }
