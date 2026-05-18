@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.assignment_fit5046.BuildConfig
 import com.example.assignment_fit5046.datamodels.AppNotification
+import retrofit2.HttpException
 import com.example.assignment_fit5046.datamodels.Application as VolunteerApplication
 import com.example.assignment_fit5046.datamodels.ApplicationStatus
 import com.example.assignment_fit5046.datamodels.Drive
@@ -791,6 +792,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun searchNgoModal(keyword: String) {
+        if (keyword.isBlank()) return
         viewModelScope.launch {
             _ngoModalLoading.value = true
             _ngoModalError.value = null
@@ -799,8 +801,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     apiKey = BuildConfig.GLOBAL_GIVING_API_KEY,
                     keyword = keyword
                 )
-                _ngoModalResults.value = response.projects.project.take(10)
+                val projects = response.search?.response?.projects?.project ?: emptyList()
+                Log.d("NGO_SEARCH", "Raw projects returned: ${projects.size}")
+                // Deduplicate by org name — show unique organisations only
+                val uniqueOrgs = projects
+                    .filter { it.organization?.name != null }
+                    .distinctBy { it.organization?.name }
+                    .take(15)
+                Log.d("NGO_SEARCH", "Unique orgs: ${uniqueOrgs.size}")
+                _ngoModalResults.value = uniqueOrgs
+            } catch (e: HttpException) {
+                val errorBody = e.response()?.errorBody()?.string()
+                Log.e("NGO_SEARCH", "HTTP ${e.code()} — $errorBody")
+                _ngoModalError.value = "Search failed (${e.code()}). Try a different keyword."
             } catch (e: Exception) {
+                Log.e("NGO_SEARCH", "Error: ${e.message}")
                 _ngoModalError.value = e.message
             } finally {
                 _ngoModalLoading.value = false

@@ -4,14 +4,17 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,7 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -29,9 +35,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -48,16 +55,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.datamodels.UserRole
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
@@ -91,6 +105,7 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel, m
     var ngoName by remember { mutableStateOf("") }
     var ngoDescription by remember { mutableStateOf("") }
 
+    var ngoAddress by remember { mutableStateOf("") }
     var showNgoSearchSheet by remember { mutableStateOf(false) }
     var ngoSearchQuery by remember { mutableStateOf("") }
     var selectedNgoMetadata by remember { mutableStateOf("") }
@@ -217,6 +232,15 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel, m
                 ) {
                     Text("Search NGO on GlobalGiving")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = ngoAddress,
+                    onValueChange = { ngoAddress = it },
+                    label = { Text("Address (optional)") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
@@ -360,7 +384,8 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel, m
                         bio = bio.trim(),
                         ngoName = ngoName.trim(),
                         ngoDescription = ngoDescription.trim(),
-                        ngoMetadata = selectedNgoMetadata
+                        ngoMetadata = selectedNgoMetadata,
+                        ngoAddress = ngoAddress.trim()
                     )
                 }
             },
@@ -448,68 +473,169 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel, m
     }
 
     if (showNgoSearchSheet) {
-        ModalBottomSheet(
+        val configuration = LocalConfiguration.current
+        val screenWidth = configuration.screenWidthDp.dp
+
+        AlertDialog(
             onDismissRequest = {
                 showNgoSearchSheet = false
                 mainViewModel.clearNgoModal()
-            }
-        ) {
-            Text(
-                text = "Find your NGO",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-            OutlinedTextField(
-                value = ngoSearchQuery,
-                onValueChange = { ngoSearchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                placeholder = { Text("Search by keyword...") },
-                trailingIcon = {
-                    IconButton(onClick = { mainViewModel.searchNgoModal(ngoSearchQuery) }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.width(minOf(360.dp, screenWidth - 32.dp)),
+            title = { Text("Find your NGO", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // Search row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = ngoSearchQuery,
+                            onValueChange = { ngoSearchQuery = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("Search Australian NGOs...") },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { mainViewModel.searchNgoModal(ngoSearchQuery) }),
+                            singleLine = true
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                                .clickable { mainViewModel.searchNgoModal(ngoSearchQuery) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = "Search",
+                                tint = Color.White
+                            )
+                        }
                     }
-                },
-                singleLine = true
-            )
-            if (ngoModalError != null) {
-                Text(
-                    text = ngoModalError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                )
-            }
-            if (ngoModalLoading) {
-                AppLoader(isLoading = true, role = UserRole.NGO)
-            } else if (ngoModalResults.isEmpty()) {
-                Text(
-                    text = "No results found",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                LazyColumn {
-                    items(ngoModalResults) { project ->
-                        ListItem(
-                            headlineContent = { Text(project.title ?: "") },
-                            supportingContent = { Text(project.organization?.name ?: "") },
-                            modifier = Modifier.clickable {
-                                ngoName = project.organization?.name ?: ngoName
-                                ngoDescription = project.summary ?: ""
-                                selectedNgoMetadata = Gson().toJson(project)
-                                showNgoSearchSheet = false
-                                mainViewModel.clearNgoModal()
-                            }
+                    // Error text
+                    if (ngoModalError != null) {
+                        Text(
+                            text = ngoModalError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
+                    // Loading
+                    if (ngoModalLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        }
+                    } else if (ngoModalResults.isEmpty()) {
+                        // Empty state
+                        Text(
+                            text = "Search for your organisation above",
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        // Results list
+                        LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
+                            items(ngoModalResults) { project ->
+                                val orgName = project.organization?.name ?: ""
+                                val initials = orgName.split(" ").take(2)
+                                    .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                    .joinToString("")
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            ngoName = project.organization?.name ?: ngoName
+                                            ngoDescription = project.organization?.mission ?: project.summary ?: ""
+                                            ngoAddress = listOfNotNull(
+                                                project.organization?.contactAddress,
+                                                project.organization?.contactAddress2
+                                            ).filter { it.isNotBlank() }.joinToString(", ")
+                                            selectedNgoMetadata = Gson().toJson(project.organization)
+                                            showNgoSearchSheet = false
+                                            mainViewModel.clearNgoModal()
+                                        }
+                                        .padding(vertical = 10.dp, horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Initials avatar
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.primaryContainer,
+                                                RoundedCornerShape(10.dp)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = initials,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    // Name + secondary info
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(start = 12.dp)
+                                    ) {
+                                        Text(
+                                            text = orgName,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        if (project.organization?.activeProjects != null) {
+                                            Text(
+                                                text = "${project.organization.activeProjects} active projects",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        } else {
+                                            val location = project.organization?.contactAddress
+                                                ?: project.organization?.contactAddress2
+                                            if (location != null) {
+                                                Text(
+                                                    text = location,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                        }
+                                    }
+                                    // Arrow
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                    }
                 }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = {
+                    showNgoSearchSheet = false
+                    mainViewModel.clearNgoModal()
+                }) { Text("Cancel") }
             }
-        }
+        )
     }
 }

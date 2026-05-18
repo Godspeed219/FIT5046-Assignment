@@ -104,7 +104,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         bio: String = "",
         ngoName: String = "",
         ngoDescription: String = "",
-        ngoMetadata: String = ""
+        ngoMetadata: String = "",
+        ngoAddress: String = ""
     ) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
@@ -117,7 +118,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 bio = bio,
                 ngoName = ngoName,
                 ngoDescription = ngoDescription,
-                ngoMetadata = ngoMetadata
+                ngoMetadata = ngoMetadata,
+                ngoAddress = ngoAddress
             )
                 .onSuccess { user ->
                     try {

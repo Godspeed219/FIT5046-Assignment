@@ -21,7 +21,8 @@ object UserService {
         bio: String = "",
         ngoName: String = "",
         ngoDescription: String = "",
-        ngoMetadata: String = ""
+        ngoMetadata: String = "",
+        ngoAddress: String = ""
     ): Result<User> = runCatching {
         val authResult = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = authResult.user!!.uid
@@ -35,7 +36,8 @@ object UserService {
             ngoName = ngoName,
             ngoDescription = ngoDescription,
             profileImageUrl = "",
-            ngoMetadata = ngoMetadata
+            ngoMetadata = ngoMetadata,
+            ngoAddress = ngoAddress
         )
         firestore.collection(USERS_COLLECTION).document(uid).set(user).await()
         user
@@ -98,7 +100,8 @@ object UserService {
         email: String,
         name: String,
         role: UserRole,
-        ngoMetadata: String = ""
+        ngoMetadata: String = "",
+        ngoAddress: String = ""
     ): Result<User> {
         return try {
             val user = User(
@@ -111,7 +114,8 @@ object UserService {
                 profileImageUrl = "",
                 ngoName = if (role == UserRole.NGO) name else "",
                 ngoDescription = "",
-                ngoMetadata = ngoMetadata
+                ngoMetadata = ngoMetadata,
+                ngoAddress = ngoAddress
             )
             firestore.collection(USERS_COLLECTION).document(uid).set(user).await()
             Result.success(user)
