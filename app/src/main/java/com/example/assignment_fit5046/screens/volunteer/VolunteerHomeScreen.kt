@@ -59,6 +59,7 @@ import com.example.assignment_fit5046.components.common.Screen
 import com.example.assignment_fit5046.components.volunteer.DriveCard
 import com.example.assignment_fit5046.components.volunteer.QuoteCard
 import com.example.assignment_fit5046.datamodels.UserRole
+import com.example.assignment_fit5046.services.LocationSimulator
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
@@ -78,6 +79,7 @@ fun HomeScreen(
     val currentUser = (authState as? AuthState.LoggedIn)?.user
 
     val allActiveDrives by mainViewModel.allActiveDrives.collectAsState()
+    val contextRankedDrives by mainViewModel.contextRankedDrives.collectAsState()
     val quote by mainViewModel.quote.collectAsState()
     val isLoading by mainViewModel.isLoading.collectAsState()
     val isRefreshing by mainViewModel.isRefreshing.collectAsState()
@@ -89,7 +91,8 @@ fun HomeScreen(
     var toastMessage by remember { mutableStateOf<String?>(null) }
     val pullRefreshState = rememberPullToRefreshState()
 
-    val filteredDrives = allActiveDrives.filter { drive ->
+    val sourceDrives = if (contextRankedDrives.isNotEmpty()) contextRankedDrives else allActiveDrives
+    val filteredDrives = sourceDrives.filter { drive ->
         val matchesQuery = searchQuery.isEmpty() ||
             drive.title.contains(searchQuery, ignoreCase = true) ||
             drive.ngoName.contains(searchQuery, ignoreCase = true)
@@ -215,6 +218,18 @@ fun HomeScreen(
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
+                    }
+
+                    item {
+                        val location = LocationSimulator.currentLocation.collectAsState().value
+                        if (location != null) {
+                            Text(
+                                text = "Showing drives near ${String.format("%.4f", location.latitude)}, ${String.format("%.4f", location.longitude)}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                            )
+                        }
                     }
 
                     // Empty state

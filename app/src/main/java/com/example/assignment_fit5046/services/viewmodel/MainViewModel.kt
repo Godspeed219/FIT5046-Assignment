@@ -21,6 +21,8 @@ import com.example.assignment_fit5046.datamodels.UserRole
 import com.example.assignment_fit5046.datamodels.WeatherResponse
 import com.example.assignment_fit5046.components.common.NotificationHelper
 import com.example.assignment_fit5046.services.AlarmScheduler
+import com.example.assignment_fit5046.services.ContextEngine
+import com.example.assignment_fit5046.services.LocationSimulator
 import com.example.assignment_fit5046.services.local.AppDatabase
 import com.example.assignment_fit5046.services.remote.RetrofitClient
 import com.example.assignment_fit5046.services.remote.firebase.ApplicationService
@@ -120,6 +122,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _ngoModalError = MutableStateFlow<String?>(null)
     val ngoModalError: StateFlow<String?> = _ngoModalError.asStateFlow()
+
+    private val _driveCoordinates = mutableMapOf<String, Pair<Double, Double>>()
+
+    private val _contextRankedDrives = MutableStateFlow<List<Drive>>(emptyList())
+    val contextRankedDrives: StateFlow<List<Drive>> = _contextRankedDrives
 
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
@@ -447,6 +454,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _errorMessage.value.toString(),
                     ) }
 
+            // Geocode each drive for context ranking
+            _allActiveDrives.value.forEach { drive ->
+                if (!_driveCoordinates.containsKey(drive.driveId)) {
+                    try {
+                        val results = RetrofitClient.geocodingApi.geocode(drive.location)
+                        val geo = results.firstOrNull()
+                        if (geo != null) {
+                            val lat = geo.lat.toDoubleOrNull()
+                            val lon = geo.lon.toDoubleOrNull()
+                            if (lat != null && lon != null) {
+                                _driveCoordinates[drive.driveId] = Pair(lat, lon)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ContextEngine", "Geocoding failed for ${drive.location}: ${e.message}")
+                    }
+                }
+            }
+            updateContextRanking()
 
             } finally {
                 _isLoading.value = false
@@ -827,6 +853,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _ngoModalResults.value = emptyList()
         _ngoModalLoading.value = false
         _ngoModalError.value = null
+    }
+
+    fun updateContextRanking() {
+        val location = LocationSimulator.getCurrentLocation()
+        val drives = _allActiveDrives.value
+        val applications = _volunteerApplications.value
+        Log.d("ContextEngine", "updateContextRanking called — ${drives.size} drives, location=$location")
+        _contextRankedDrives.value = ContextEngine.rankDrives(
+            drives = drives,
+            location = location,
+            applications = applications,
+            driveCoordinates = _driveCoordinates
+        )
     }
 
     private fun haversineKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

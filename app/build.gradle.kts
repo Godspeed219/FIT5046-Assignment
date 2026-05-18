@@ -105,6 +105,9 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
+
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.7.1")
 

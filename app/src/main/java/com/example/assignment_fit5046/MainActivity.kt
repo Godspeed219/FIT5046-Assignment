@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -16,13 +17,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.assignment_fit5046.components.common.AppNavigation
 import com.example.assignment_fit5046.components.common.NotificationHelper
 import com.example.assignment_fit5046.datamodels.UserRole
+import com.example.assignment_fit5046.services.LocationSimulator
+import com.example.assignment_fit5046.services.LocationUpdateWorker
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
 import com.example.assignment_fit5046.services.viewmodel.MainViewModel
 import com.example.assignment_fit5046.ui.AppTheme
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -32,6 +39,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationHelper.createNotificationChannels(this)
+
+        // Initialise LocationSimulator with CSV data
+        LocationSimulator.initIfNeeded(this)
+
+        // Schedule periodic location updates via WorkManager
+        val locationWorkRequest = PeriodicWorkRequestBuilder<LocationUpdateWorker>(
+            15, TimeUnit.MINUTES
+        ).build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "location_update",
+            ExistingPeriodicWorkPolicy.KEEP,
+            locationWorkRequest
+        )
+        Log.d("WorkManager", "LocationUpdateWorker scheduled")
+
         enableEdgeToEdge()
         setContent {
             var currentRole by remember { mutableStateOf(UserRole.VOLUNTEER) }
