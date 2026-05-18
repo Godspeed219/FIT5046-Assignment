@@ -156,7 +156,7 @@ fun AppNavigation(
                 LoginScreen(navController = navController, authViewModel = authViewModel)
             }
             composable(Screen.Register.route) {
-                RegisterScreen(navController = navController, authViewModel = authViewModel)
+                RegisterScreen(navController = navController, authViewModel = authViewModel, mainViewModel = mainViewModel)
             }
             composable(Screen.VolunteerHome.route) {
                 HomeScreen(

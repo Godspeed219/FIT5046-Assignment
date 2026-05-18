@@ -4,9 +4,10 @@ import com.google.gson.annotations.SerializedName
 
 // Quotable API — https://api.quotable.io/random
 data class Quote(
-    @SerializedName("_id") val id: String,
-    @SerializedName("content") val content: String,
-    @SerializedName("author") val author: String,
-    @SerializedName("tags") val tags: List<String> = emptyList(),
-    @SerializedName("length") val length: Int
+    @SerializedName("q") val content: String = "",
+    @SerializedName("a") val author: String = "",
+    val id: String = "",
+    val authorSlug: String = "",
+    val length: Int = 0,
+    val tags: List<String> = emptyList()
 )

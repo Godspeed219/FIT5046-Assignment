@@ -11,4 +11,10 @@ interface GlobalGivingApi {
         @Path("theme") theme: String,
         @Query("api_key") apiKey: String
     ): ProjectSearchResponse
+
+    @GET("api/public/projectservice/all/projects/active")
+    suspend fun searchProjects(
+        @Query("api_key") apiKey: String,
+        @Query("q") keyword: String
+    ): ProjectSearchResponse
 }

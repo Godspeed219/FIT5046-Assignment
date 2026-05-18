@@ -111,6 +111,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _driveDistance = MutableStateFlow<Double?>(null)
     val driveDistance: StateFlow<Double?> = _driveDistance.asStateFlow()
 
+    private val _ngoModalResults = MutableStateFlow<List<GlobalGivingProject>>(emptyList())
+    val ngoModalResults: StateFlow<List<GlobalGivingProject>> = _ngoModalResults.asStateFlow()
+
+    private val _ngoModalLoading = MutableStateFlow(false)
+    val ngoModalLoading: StateFlow<Boolean> = _ngoModalLoading.asStateFlow()
+
+    private val _ngoModalError = MutableStateFlow<String?>(null)
+    val ngoModalError: StateFlow<String?> = _ngoModalError.asStateFlow()
+
     fun loadNgoDashboard(ngoId: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -437,17 +446,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _errorMessage.value.toString(),
                     ) }
 
-                try {
-                    _quote.value = RetrofitClient.quotableApi.getRandomQuote().firstOrNull()
-                } catch (_: Exception) {
-                    _quote.value = Quote(
-                        id = "static",
-                        content = "The best way to find yourself is to lose yourself in the service of others.",
-                        author = "Mahatma Gandhi",
-                        tags = emptyList(),
-                        length = 86
-                    )
-                }
+
             } finally {
                 _isLoading.value = false
             }
@@ -791,6 +790,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _driveDistance.value = null
     }
 
+    fun searchNgoModal(keyword: String) {
+        viewModelScope.launch {
+            _ngoModalLoading.value = true
+            _ngoModalError.value = null
+            try {
+                val response = RetrofitClient.globalGivingApi.searchProjects(
+                    apiKey = BuildConfig.GLOBAL_GIVING_API_KEY,
+                    keyword = keyword
+                )
+                _ngoModalResults.value = response.projects.project.take(10)
+            } catch (e: Exception) {
+                _ngoModalError.value = e.message
+            } finally {
+                _ngoModalLoading.value = false
+            }
+        }
+    }
+
+    fun clearNgoModal() {
+        _ngoModalResults.value = emptyList()
+        _ngoModalLoading.value = false
+        _ngoModalError.value = null
+    }
+
     private fun haversineKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val r = 6371.0
         val dLat = Math.toRadians(lat2 - lat1)
@@ -807,6 +830,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearProfileUpdateSuccess() {
         _profileUpdateSuccess.value = false
+    }
+
+    fun refreshQuote() {
+        viewModelScope.launch {
+            repeat(2) { attempt ->
+                try {
+                    val result = RetrofitClient.quotableApi.getRandomQuote().firstOrNull()
+                    if (result != null && result.content.isNotBlank()) {
+                        _quote.value = result
+                        return@launch
+                    }
+                } catch (e: Exception) {
+                    if (attempt == 1) {
+                        _quote.value = Quote(
+                            id = "static",
+                            content = "The best way to find yourself is to lose yourself in the service of others.",
+                            author = "Mahatma Gandhi",
+                            tags = emptyList(),
+                            length = 86
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun startNotificationListener(uid: String) {

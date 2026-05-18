@@ -18,7 +18,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -26,7 +29,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -52,12 +57,16 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.assignment_fit5046.R
 import com.example.assignment_fit5046.datamodels.UserRole
+import androidx.compose.ui.text.style.TextAlign
+import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.services.viewmodel.AuthState
 import com.example.assignment_fit5046.services.viewmodel.AuthViewModel
+import com.example.assignment_fit5046.services.viewmodel.MainViewModel
+import com.google.gson.Gson
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
+fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel, mainViewModel: MainViewModel) {
     val context = LocalContext.current
     val webClientId = stringResource(R.string.default_web_client_id)
 
@@ -82,9 +91,17 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
     var ngoName by remember { mutableStateOf("") }
     var ngoDescription by remember { mutableStateOf("") }
 
+    var showNgoSearchSheet by remember { mutableStateOf(false) }
+    var ngoSearchQuery by remember { mutableStateOf("") }
+    var selectedNgoMetadata by remember { mutableStateOf("") }
+
     val authState by authViewModel.authState.collectAsState()
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
+
+    val ngoModalResults by mainViewModel.ngoModalResults.collectAsState()
+    val ngoModalLoading by mainViewModel.ngoModalLoading.collectAsState()
+    val ngoModalError by mainViewModel.ngoModalError.collectAsState()
 
     // Sync name when pendingGoogleUser arrives (e.g., after CredentialManager resolves)
     LaunchedEffect(pendingGoogleUser) {
@@ -192,6 +209,14 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                     enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { showNgoSearchSheet = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading
+                ) {
+                    Text("Search NGO on GlobalGiving")
+                }
                 Spacer(modifier = Modifier.height(12.dp))
             }
         }
@@ -334,7 +359,8 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
                         phoneNumber = phone.trim(),
                         bio = bio.trim(),
                         ngoName = ngoName.trim(),
-                        ngoDescription = ngoDescription.trim()
+                        ngoDescription = ngoDescription.trim(),
+                        ngoMetadata = selectedNgoMetadata
                     )
                 }
             },
@@ -419,5 +445,71 @@ fun RegisterScreen(navController: NavController, authViewModel: AuthViewModel) {
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (showNgoSearchSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showNgoSearchSheet = false
+                mainViewModel.clearNgoModal()
+            }
+        ) {
+            Text(
+                text = "Find your NGO",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            OutlinedTextField(
+                value = ngoSearchQuery,
+                onValueChange = { ngoSearchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                placeholder = { Text("Search by keyword...") },
+                trailingIcon = {
+                    IconButton(onClick = { mainViewModel.searchNgoModal(ngoSearchQuery) }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                },
+                singleLine = true
+            )
+            if (ngoModalError != null) {
+                Text(
+                    text = ngoModalError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+            if (ngoModalLoading) {
+                AppLoader(isLoading = true, role = UserRole.NGO)
+            } else if (ngoModalResults.isEmpty()) {
+                Text(
+                    text = "No results found",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                LazyColumn {
+                    items(ngoModalResults) { project ->
+                        ListItem(
+                            headlineContent = { Text(project.title ?: "") },
+                            supportingContent = { Text(project.organization?.name ?: "") },
+                            modifier = Modifier.clickable {
+                                ngoName = project.organization?.name ?: ngoName
+                                ngoDescription = project.summary ?: ""
+                                selectedNgoMetadata = Gson().toJson(project)
+                                showNgoSearchSheet = false
+                                mainViewModel.clearNgoModal()
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 }

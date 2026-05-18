@@ -45,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -97,7 +98,10 @@ fun HomeScreen(
     }
 
     LaunchedEffect(currentUser?.uid) {
-        currentUser?.uid?.let { mainViewModel.loadVolunteerHome(it) }
+        currentUser?.uid?.let {
+            mainViewModel.loadVolunteerHome(it)
+            mainViewModel.refreshQuote()
+        }
     }
 
     LaunchedEffect(errorMessage) {
@@ -154,7 +158,9 @@ fun HomeScreen(
 
                     // Quote card
                     item {
-                        quote?.let { QuoteCard(quote = it) }
+                        quote?.let { q ->
+                            QuoteCard(quote = q)
+                        }
                     }
 
                     item {

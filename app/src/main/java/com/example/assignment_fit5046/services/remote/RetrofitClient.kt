@@ -12,7 +12,7 @@ object RetrofitClient {
 
     val quotableApi: QuotableApi by lazy {
         Retrofit.Builder()
-            .baseUrl("https://api.quotable.io/")
+            .baseUrl("https://zenquotes.io/api/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(QuotableApi::class.java)
