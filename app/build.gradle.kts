@@ -108,6 +108,9 @@ dependencies {
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.11.2")
 
+    // OSMDroid map
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+
     // Lottie
     implementation("com.airbnb.android:lottie-compose:6.7.1")
 

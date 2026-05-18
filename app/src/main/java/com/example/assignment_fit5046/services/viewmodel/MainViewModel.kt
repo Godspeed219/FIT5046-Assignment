@@ -125,6 +125,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _driveCoordinates = mutableMapOf<String, Pair<Double, Double>>()
 
+    private val _driveCoordinatesState = MutableStateFlow<Map<String, Pair<Double, Double>>>(emptyMap())
+    val driveCoordinatesState: StateFlow<Map<String, Pair<Double, Double>>> = _driveCoordinatesState
+
     private val _contextRankedDrives = MutableStateFlow<List<Drive>>(emptyList())
     val contextRankedDrives: StateFlow<List<Drive>> = _contextRankedDrives
 
@@ -465,6 +468,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             val lon = geo.lon.toDoubleOrNull()
                             if (lat != null && lon != null) {
                                 _driveCoordinates[drive.driveId] = Pair(lat, lon)
+                                _driveCoordinatesState.value = _driveCoordinates.toMap()
                             }
                         }
                     } catch (e: Exception) {

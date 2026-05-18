@@ -41,6 +41,7 @@ import com.example.assignment_fit5046.screens.ngo.NgoProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.DriveDetailScreen
 import com.example.assignment_fit5046.screens.volunteer.EditVolunteerProfileScreen
 import com.example.assignment_fit5046.screens.volunteer.HomeScreen
+import com.example.assignment_fit5046.screens.volunteer.MapScreen
 import com.example.assignment_fit5046.screens.volunteer.MyApplicationsScreen
 import com.example.assignment_fit5046.screens.volunteer.ProfileScreen
 import com.example.assignment_fit5046.services.viewmodel.AuthState
@@ -69,6 +70,7 @@ sealed class Screen(val route: String) {
     object ContactUs : Screen("contact_us")
     object TermsConditions : Screen("terms_conditions")
     object Notifications : Screen("notifications")
+    object DriveMap : Screen("drive_map")
 }
 
 @Composable
@@ -103,7 +105,8 @@ fun AppNavigation(
     val volunteerTopRoutes = setOf(
         Screen.VolunteerHome.route,
         Screen.MyApplications.route,
-        Screen.VolunteerProfile.route
+        Screen.VolunteerProfile.route,
+        Screen.DriveMap.route
     )
     val ngoTopRoutes = setOf(
         Screen.NgoDashboard.route,
@@ -270,6 +273,12 @@ fun AppNavigation(
                 NotificationsScreen(
                     navController = navController,
                     authViewModel = authViewModel,
+                    mainViewModel = mainViewModel
+                )
+            }
+            composable(Screen.DriveMap.route) {
+                MapScreen(
+                    navController = navController,
                     mainViewModel = mainViewModel
                 )
             }

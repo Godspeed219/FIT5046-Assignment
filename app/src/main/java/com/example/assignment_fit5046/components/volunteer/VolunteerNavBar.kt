@@ -3,6 +3,7 @@ package com.example.assignment_fit5046.components.volunteer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +24,7 @@ fun VolunteerNavBar(navController: NavController) {
     val items = listOf(
         Triple("Home", Screen.VolunteerHome.route, Icons.Default.Home),
         Triple("Applications", Screen.MyApplications.route, Icons.Default.List),
+        Triple("Map", Screen.DriveMap.route, Icons.Default.Map),
         Triple("Profile", Screen.VolunteerProfile.route, Icons.Default.Person)
     )
 
