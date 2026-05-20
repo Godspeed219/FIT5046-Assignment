@@ -287,6 +287,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             ApplicationService.updateApplicationStatus(applicationId, status)
                 .onSuccess {
+                    // Capture previous status before StateFlow is updated
+                    val previousStatus = _ngoApplications.value.find { it.applicationId == applicationId }?.status
+
                     _ngoApplications.value = _ngoApplications.value.map { app ->
                         if (app.applicationId == applicationId) app.copy(status = status) else app
                     }
@@ -353,6 +356,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                         // Sync Room with updated status
                         applicationDao.updateStatus(applicationId, status)
+                    }
+
+                    // Update volunteer spot count based on status change
+                    when (status) {
+                        ApplicationStatus.APPROVED -> {
+                            // Increment spots taken when approved
+                            DriveService.incrementVolunteerCount(driveId)
+                            _allActiveDrives.value = _allActiveDrives.value.map { d ->
+                                if (d.driveId == driveId) d.copy(currentVolunteers = d.currentVolunteers + 1) else d
+                            }
+                            _ngoDrives.value = _ngoDrives.value.map { d ->
+                                if (d.driveId == driveId) d.copy(currentVolunteers = d.currentVolunteers + 1) else d
+                            }
+                            driveDao.insertDrive(
+                                _ngoDrives.value.find { it.driveId == driveId } ?: return@onSuccess
+                            )
+                        }
+                        ApplicationStatus.REJECTED -> {
+                            // Find if this application was previously approved — if so decrement
+                            if (previousStatus == ApplicationStatus.APPROVED) {
+                                DriveService.decrementVolunteerCount(driveId)
+                                _allActiveDrives.value = _allActiveDrives.value.map { d ->
+                                    if (d.driveId == driveId) d.copy(
+                                        currentVolunteers = maxOf(0, d.currentVolunteers - 1)
+                                    ) else d
+                                }
+                                _ngoDrives.value = _ngoDrives.value.map { d ->
+                                    if (d.driveId == driveId) d.copy(
+                                        currentVolunteers = maxOf(0, d.currentVolunteers - 1)
+                                    ) else d
+                                }
+                                driveDao.insertDrive(
+                                    _ngoDrives.value.find { it.driveId == driveId } ?: return@onSuccess
+                                )
+                            }
+                        }
+                        else -> { /* PENDING and WITHDRAWN do not affect spot count */ }
                     }
                 }
                 .onFailure { _errorMessage.value = it.message }
