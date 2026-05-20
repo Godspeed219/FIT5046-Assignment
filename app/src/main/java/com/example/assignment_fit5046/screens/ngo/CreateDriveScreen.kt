@@ -1,5 +1,6 @@
 package com.example.assignment_fit5046.screens.ngo
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,6 +58,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -89,6 +91,7 @@ private val CATEGORY_OPTIONS = listOf(
     "Environment", "Education", "Health", "Animal Welfare", "Community"
 )
 
+@SuppressLint("DefaultLocale")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateDriveScreen(
@@ -96,7 +99,7 @@ fun CreateDriveScreen(
     authViewModel: AuthViewModel,
     mainViewModel: MainViewModel
 ) {
-    var currentStep by remember { mutableStateOf(1) }
+    var currentStep by remember { mutableIntStateOf(1) }
 
     // Step 1
     var title by remember { mutableStateOf("") }
@@ -277,7 +280,7 @@ fun CreateDriveScreen(
                             }
                         },
                         onBack = { currentStep = 2 },
-                        onPost = {
+                        onPost = { url ->
                             if (startTime.isBlank() || endTime.isBlank()) {
                                 toastMessage = "Please select start and end time"
                             } else {
@@ -295,7 +298,7 @@ fun CreateDriveScreen(
                                         category = category,
                                         status = DriveStatus.ACTIVE,
                                         createdAt = System.currentTimeMillis(),
-                                        bannerUrl = bannerUrl,
+                                        bannerUrl = url,
                                         startTime = startTime,
                                         endTime = endTime
                                     )
@@ -540,11 +543,18 @@ private fun Step2Content(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val maxVolunteersError = maxVolunteers.isNotBlank() &&
+            (maxVolunteers.toIntOrNull() == null || (maxVolunteers.toIntOrNull() ?: 0) < 1)
+
         OutlinedTextField(
             value = maxVolunteers,
-            onValueChange = onMaxVolunteersChange,
+            onValueChange = { if (it.all { c -> c.isDigit() }) onMaxVolunteersChange(it) },
             label = { Text("Max Volunteers") },
             singleLine = true,
+            isError = maxVolunteersError,
+            supportingText = if (maxVolunteersError) {
+                { Text("Must be a number greater than 0") }
+            } else null,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
@@ -563,7 +573,7 @@ private fun Step2Content(
             }
             Button(
                 onClick = onNext,
-                enabled = location.isNotBlank() && date.isNotBlank() && maxVolunteers.isNotBlank(),
+                enabled = location.isNotBlank() && date.isNotBlank() && (maxVolunteers.toIntOrNull() ?: 0) >= 1,
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Next")
@@ -583,7 +593,7 @@ private fun Step3Content(
     onPickImage: () -> Unit,
     onUpload: () -> Unit,
     onBack: () -> Unit,
-    onPost: () -> Unit
+    onPost: (String) -> Unit
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Box(
@@ -662,12 +672,21 @@ private fun Step3Content(
                 Text("Back")
             }
             Button(
-                onClick = onPost,
-                enabled = !isLoading,
+                onClick = { onPost(bannerUrl) },
+                enabled = !isLoading && !(bannerUri != null && bannerUrl.isEmpty()),
                 modifier = Modifier.weight(1f)
             ) {
                 Text("Post Drive")
             }
+        }
+
+        if (bannerUri != null && bannerUrl.isEmpty()) {
+            Text(
+                text = "Please upload the banner before posting",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

@@ -26,6 +26,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 sealed class AuthState {
     data object Loading : AuthState()
@@ -72,6 +74,46 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    private fun formatAuthError(message: String?): String {
+        if (message == null) return "Something went wrong. Please try again."
+        return when {
+            message.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ||
+            message.contains("invalid-credential", ignoreCase = true) ||
+            message.contains("INVALID_PASSWORD", ignoreCase = true) ->
+                "Incorrect email or password. Please try again."
+            message.contains("EMAIL_NOT_FOUND", ignoreCase = true) ||
+            message.contains("user-not-found", ignoreCase = true) ->
+                "No account found with this email address."
+            message.contains("INVALID_EMAIL", ignoreCase = true) ||
+            message.contains("invalid-email", ignoreCase = true) ->
+                "Please enter a valid email address."
+            message.contains("USER_DISABLED", ignoreCase = true) ||
+            message.contains("user-disabled", ignoreCase = true) ->
+                "This account has been disabled. Please contact support."
+            message.contains("TOO_MANY_REQUESTS", ignoreCase = true) ||
+            message.contains("too-many-requests", ignoreCase = true) ->
+                "Too many failed attempts. Please wait a moment and try again."
+            message.contains("NETWORK_ERROR", ignoreCase = true) ||
+            message.contains("network", ignoreCase = true) ->
+                "Network error. Please check your connection and try again."
+            message.contains("EMAIL_EXISTS", ignoreCase = true) ||
+            message.contains("email-already-in-use", ignoreCase = true) ->
+                "An account with this email already exists. Try logging in instead."
+            message.contains("WEAK_PASSWORD", ignoreCase = true) ||
+            message.contains("weak-password", ignoreCase = true) ->
+                "Password is too weak. Please use at least 6 characters."
+            message.contains("CREDENTIAL_TYPE_NOT_SUPPORTED", ignoreCase = true) ->
+                "Google Sign-In is not supported on this device configuration."
+            message.contains("No credentials available", ignoreCase = true) ->
+                "No Google account found. Please add a Google account in device settings first."
+            message.contains("cancelled", ignoreCase = true) ->
+                "Sign-in was cancelled."
+            message.contains("Unexpected credential", ignoreCase = true) ->
+                "Unexpected error during Google Sign-In. Please try again."
+            else -> "Something went wrong. Please try again."
+        }
+    }
+
     fun login(email: String, password: String) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
@@ -90,7 +132,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 .onFailure {
                     Log.e("AUTH_DEBUG", "Login failed: ${it::class.simpleName} — ${it.message}", it)
-                    _authState.value = AuthState.Error(it.message ?: "Login failed")
+                    _authState.value = AuthState.Error(formatAuthError(it.message))
                 }
         }
     }
@@ -132,7 +174,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 .onFailure {
                     Log.e("AUTH_DEBUG", "Register failed: ${it.message}", it)
-                    _authState.value = AuthState.Error(it.message ?: "Registration failed")
+                    _authState.value = AuthState.Error(formatAuthError(it.message))
                 }
         }
     }
@@ -202,7 +244,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     val checkResult = UserService.checkGoogleUser(idToken)
                     if (checkResult.isFailure) {
                         _authState.value = AuthState.Error(
-                            checkResult.exceptionOrNull()?.message ?: "Google Sign-In failed"
+                            formatAuthError(checkResult.exceptionOrNull()?.message)
                         )
                     } else {
                         val existingUser = checkResult.getOrNull()
@@ -221,12 +263,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                 } else {
-                    _authState.value = AuthState.Error("Unexpected credential type")
+                    _authState.value = AuthState.Error("Unexpected error during Google Sign-In. Please try again.")
                 }
             } catch (e: GetCredentialCancellationException) {
-                _authState.value = AuthState.Error("Sign-in cancelled")
+                _authState.value = AuthState.Error("Sign-in was cancelled.")
             } catch (e: Exception) {
-                _authState.value = AuthState.Error(e.message ?: "Google Sign-In failed")
+                // Credential Manager failed — signal UI to fall back to legacy Google Sign-In intent
+                Log.w("AUTH_DEBUG", "Credential Manager failed, falling back to legacy GSI: ${e.message}")
+                _authState.value = AuthState.Error("FALLBACK_GOOGLE_SIGNIN")
             }
         }
     }
@@ -268,8 +312,57 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _authState.value = AuthState.LoggedIn(user)
             } else {
                 _authState.value = AuthState.Error(
-                    result.exceptionOrNull()?.message ?: "Registration failed"
+                    formatAuthError(result.exceptionOrNull()?.message)
                 )
+            }
+        }
+    }
+
+    fun getGoogleSignInIntent(context: Context, webClientId: String): android.content.Intent {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(webClientId)
+            .requestEmail()
+            .build()
+        return GoogleSignIn.getClient(context, gso).signInIntent
+    }
+
+    fun handleGoogleSignInResult(data: android.content.Intent?) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+                val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
+                val idToken = account.idToken
+                if (idToken == null) {
+                    _authState.value = AuthState.Error("Google Sign-In failed. Please try again.")
+                    return@launch
+                }
+                val checkResult = UserService.checkGoogleUser(idToken)
+                if (checkResult.isFailure) {
+                    _authState.value = AuthState.Error(formatAuthError(checkResult.exceptionOrNull()?.message))
+                    return@launch
+                }
+                val existingUser = checkResult.getOrNull()
+                if (existingUser != null) {
+                    userDao.insertUser(existingUser)
+                    _authState.value = AuthState.LoggedIn(existingUser)
+                } else {
+                    val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    _pendingGoogleUser.value = PendingGoogleUser(
+                        uid = firebaseUser?.uid ?: "",
+                        email = firebaseUser?.email ?: "",
+                        name = firebaseUser?.displayName ?: ""
+                    )
+                    _authState.value = AuthState.LoggedOut
+                }
+            } catch (e: com.google.android.gms.common.api.ApiException) {
+                if (e.statusCode == com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes.SIGN_IN_CANCELLED) {
+                    _authState.value = AuthState.Error("Sign-in was cancelled.")
+                } else {
+                    _authState.value = AuthState.Error(formatAuthError(e.message))
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(formatAuthError(e.message))
             }
         }
     }

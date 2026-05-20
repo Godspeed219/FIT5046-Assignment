@@ -58,7 +58,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.assignment_fit5046.components.common.AppLoader
 import com.example.assignment_fit5046.components.common.AppToast
 import com.example.assignment_fit5046.components.common.Screen
@@ -276,7 +278,10 @@ fun DriveDetailScreen(
                         ) {
                             if (drive.bannerUrl.isNotEmpty()) {
                                 AsyncImage(
-                                    model = drive.bannerUrl,
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(drive.bannerUrl)
+                                        .crossfade(true)
+                                        .build(),
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop

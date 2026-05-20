@@ -220,7 +220,7 @@ fun ProfileScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .background(Color(0xFFF5F5F5)),
                     ) {
                         SubMenuItem(
                             label = "About Us",

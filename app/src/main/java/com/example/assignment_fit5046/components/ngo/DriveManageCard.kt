@@ -208,7 +208,7 @@ fun DriveManageCard(
                 Surface(
                     onClick = onViewApplications,
                     shape = RoundedCornerShape(6.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(

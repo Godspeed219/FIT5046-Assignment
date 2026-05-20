@@ -28,6 +28,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +66,21 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
     val authState by authViewModel.authState.collectAsState()
     val isLoading = authState is AuthState.Loading
     val errorMessage = (authState as? AuthState.Error)?.message
+    val displayError = if (errorMessage == "FALLBACK_GOOGLE_SIGNIN") null else errorMessage
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        authViewModel.handleGoogleSignInResult(result.data)
+    }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Error &&
+            (authState as AuthState.Error).message == "FALLBACK_GOOGLE_SIGNIN") {
+            val intent = authViewModel.getGoogleSignInIntent(context, webClientId)
+            googleSignInLauncher.launch(intent)
+        }
+    }
 
     // Detect which theme is active by checking the primary color
     // NGO theme uses blue, Volunteer theme uses green
@@ -143,9 +161,9 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (errorMessage != null) {
+        if (displayError != null) {
             Text(
-                text = errorMessage,
+                text = displayError,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )

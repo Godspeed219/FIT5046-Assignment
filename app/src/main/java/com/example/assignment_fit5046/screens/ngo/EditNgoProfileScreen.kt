@@ -205,11 +205,18 @@ fun EditNgoProfileScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                val phoneError = phoneNumber.isNotBlank() &&
+                    !phoneNumber.matches(Regex("^[+]?[0-9]{8,15}$"))
+
                 OutlinedTextField(
                     value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
+                    onValueChange = { if (it.length <= 15) phoneNumber = it },
                     label = { Text("Phone Number") },
                     singleLine = true,
+                    isError = phoneError,
+                    supportingText = if (phoneError) {
+                        { Text("Enter a valid phone number (8-15 digits)") }
+                    } else null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -231,7 +238,7 @@ fun EditNgoProfileScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isLoading
+                    enabled = !isLoading && name.isNotBlank() && !phoneError
                 ) {
                     Text("Save Changes")
                 }

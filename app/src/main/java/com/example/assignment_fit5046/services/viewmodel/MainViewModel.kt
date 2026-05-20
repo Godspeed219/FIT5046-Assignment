@@ -361,14 +361,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun uploadDriveBanner(imageUri: Uri, context: Context, onResult: (String?) -> Unit) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
+                Log.d("CLOUDINARY", "Starting upload for URI: $imageUri")
                 val secureUrl = withContext(Dispatchers.IO) {
                     val bytes = context.contentResolver.openInputStream(imageUri)?.readBytes()
                         ?: return@withContext null
 
                     val boundary = "Boundary_${System.currentTimeMillis()}"
-                    val conn = URL("https://api.cloudinary.com/v1_1/dhdbdnvd3ly/image/upload")
+                    val conn = URL("https://api.cloudinary.com/v1_1/dhdbdnvd3/image/upload")
                         .openConnection() as HttpURLConnection
                     conn.requestMethod = "POST"
                     conn.doOutput = true
@@ -392,23 +392,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     writer.append("--$boundary--\r\n")
                     writer.flush()
 
+                    Log.d("CLOUDINARY", "Response code: ${conn.responseCode}")
                     if (conn.responseCode == HttpURLConnection.HTTP_OK) {
                         val response = conn.inputStream.bufferedReader().readText()
+                        Log.d("CLOUDINARY", "Response body: $response")
                         JSONObject(response).getString("secure_url")
                     } else {
                         null
                     }
                 }
+                if (secureUrl != null) Log.d("CLOUDINARY", "Upload success: $secureUrl")
                 if (secureUrl == null) _errorMessage.value = "Failed to upload image"
                 onResult(secureUrl)
             } catch (e: Exception) {
-                _errorMessage.value = e.message; Log.e(
-                    "FAILURE QUERY",
-                    _errorMessage.value.toString(),
-                )
+                Log.e("CLOUDINARY", "Upload exception: ${e::class.simpleName} — ${e.message}")
+                _errorMessage.value = e.message
                 onResult(null)
-            } finally {
-                _isLoading.value = false
             }
         }
     }
